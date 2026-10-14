@@ -1,0 +1,35 @@
+MISSION — PRODUCT BRIEF (public)
+amission.si
+
+WHAT IT IS
+A personal AI memory you own. It is stored encrypted on a physical device you carry.
+AI agents can use it through an MCP connector, with per-agent permissions.
+Pull the device out and connector access stops.
+
+STATUS TODAY
+- Software v1 is a plan being validated, not a released product. Planned design: an encrypted
+  USB-C stick holds the memory; a local helper detects it, decrypts it, runs the MCP connector,
+  and can optionally use Ollama for local AI. Memory would be usable only while connected.
+- The access demo on amission.si is a browser simulation, not working software.
+- Local MCP support is strongest in Claude Desktop. Support in other agents varies.
+- There is no one-click memory import from AI providers. Imports start from each provider's data export.
+
+HONEST LIMITS
+- Agents see whatever memory is shared during a session. Remote providers may retain it.
+- Unplugging stops future access. It does not erase or recall anything already shared.
+- Safe claims: minimal sharing, temporary chats, and a local audit log. Not "zero exposure".
+- A standard USB stick cannot be locked to memory-only use. That needs custom hardware.
+
+PLANNED (NOT BUILT)
+- Custom card: deep blue, credit-card sized, about 4.4 mm, inward-cut edges, USB-C.
+  Bluetooth, GPS, push-to-talk mic, secure element (NXP SE050), 32-128 GB storage, NFC, haptics.
+- Dock: matte grey bead-blasted metal bed, X-shaped clamp that opens sideways,
+  split semicircle moon that lights only when the clamp is shut and the card is seated.
+- Signals (opt-in): location, speech transcribed locally, a chief-of-staff feed.
+- Phone app as Bluetooth bridge. Payments later: open banking first.
+
+PRICE
+Founding target for the custom card: GBP 249. Not taking orders, deposits or reservations.
+
+IMAGERY
+Moon: NASA Scientific Visualization Studio (LRO). Earth: NASA Apollo 17, The Blue Marble (AS17-148-22727).

@@ -1,0 +1,9 @@
+[
+  {"capability":"Mission landing site (oki-home)","source":"artifacts/oki-home","outcome":"port to src/landing, route /","status":"in_progress","next_action":"copy source, install deps, verify"},
+  {"capability":"Mission Studio 3D app","source":"artifacts/mission-studio","outcome":"port to src/studio, route /studio","status":"in_progress","next_action":"copy source, install deps, verify"},
+  {"capability":"API server","source":"artifacts/api-server","outcome":"health-check only, no app endpoints; not needed","status":"done","next_action":"none"},
+  {"capability":"Database schema","source":"lib/db","outcome":"schema empty (no tables); nothing to migrate","status":"done","next_action":"none"},
+  {"capability":"Records","source":"none","outcome":"no record exports exist; app stores designs in browser localStorage","status":"done","next_action":"none"},
+  {"capability":"Auth","source":"none","outcome":"no auth in source; nothing to migrate","status":"done","next_action":"none"},
+  {"capability":"Static assets","source":"public/assets, public/media","outcome":"copy into public/","status":"in_progress","next_action":"copy and verify"}
+]
