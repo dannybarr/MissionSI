@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/studio/components/ui/dialog';
 import { useStudio } from '@/studio/studio/store';
 import { nextFrames, renderStill } from '@/studio/studio/export';
-import { submitWaitlist } from '@/landing/server/waitlist';
+import { submitWaitlist } from '@/landing/api/waitlist.functions';
 import { placedFeatures } from '@/studio/studio/features';
 import { TextBtn } from '../kit';
 

@@ -110,7 +110,8 @@ export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Eart
 
         {plug && (
           <g className="card-plug">
-            <rect x="-56" y="254" width="62" height="42" rx="13" fill={`url(#${id('plug')})`} />
+            <rect x="-56" y="254" width="80" height="42" rx="13" fill={`url(#${id('plug')})`} />
+            <rect x="8" y="248" width="14" height="54" rx="4" fill="#1b1b1d" />
             <rect x="-48" y="266" width="40" height="18" rx="6" fill="#2a2b2e" />
             <rect x="-44" y="272" width="32" height="6" rx="2" fill="#c7a46a" opacity="0.85" />
           </g>

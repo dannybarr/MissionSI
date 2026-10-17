@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { submitWaitlist } from '@/landing/server/waitlist'
+import { submitWaitlist } from '@/landing/api/waitlist.functions'
 import { Magnetic } from '@/landing/components/Magnetic'
 
 type Status = 'idle' | 'sending' | 'saved' | 'not_configured' | 'error'
@@ -60,7 +60,9 @@ export function Close() {
       <form className="waitlist" onSubmit={onSubmit} noValidate={false} data-reveal>
         <h3>Waitlist</h3>
         <label>
-          Name <span>(optional)</span>
+          <span className="lbl">
+            Name <span>(optional)</span>
+          </span>
           <input name="name" type="text" autoComplete="name" maxLength={80} />
         </label>
         <label>

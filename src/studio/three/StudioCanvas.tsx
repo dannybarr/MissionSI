@@ -380,7 +380,7 @@ export function StudioCanvas(props: Props) {
 function CanvasInner(props: Props) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       frameloop="always"
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}

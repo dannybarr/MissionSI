@@ -60,7 +60,7 @@ export function Statement({ reduced }: { reduced: boolean }) {
             <span key={line} className="statement-line">
               {line.split(' ').map((word) => (
                 <span key={word} data-word style={reduced ? { opacity: 1 } : undefined}>
-                  {word}{' '}
+                  {word}
                 </span>
               ))}
             </span>

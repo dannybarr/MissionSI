@@ -93,6 +93,10 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
 
   useEffect(() => {
     const el = root.current
+    if (reduced) {
+      setPhase(2)
+      setStep(2)
+    }
     if (!el || reduced) return
     const scene = el.querySelector<HTMLElement>('.plug-scene')!
     const card = el.querySelector<HTMLElement>('.plug-card')!
@@ -173,8 +177,10 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
                   style={{ ...pct(a.at.x, a.at.y), ['--brand' as string]: a.mark.cloth, ['--brand-ink' as string]: a.mark.ink, ...(reduced ? { '--on': a.granted ? 1 : 0, '--held': a.granted ? 0 : 1 } : {}) } as React.CSSProperties}
                 >
                   <span className="agent-dot" dangerouslySetInnerHTML={{ __html: a.mark.svg }} />
-                  <span className="agent-name">{a.mark.name}</span>
-                  <span className="agent-state">{a.granted ? 'granted' : 'no grant'}</span>
+                  <span className="agent-text">
+                    <span className="agent-name">{a.mark.name}</span>
+                    <span className="agent-state">{a.granted ? 'granted' : 'no grant'}</span>
+                  </span>
                 </li>
               ))}
             </ul>

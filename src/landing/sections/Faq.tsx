@@ -21,7 +21,7 @@ const ANSWERS: Record<string, { q: string; a: string }> = {
   },
   cloud: {
     q: 'Is anything stored in the cloud?',
-    a: 'No. The encrypted source of truth sits on your device. There is no Mission server holding a copy.',
+    a: 'No. The encrypted source of truth sits on your card. There is no Mission server holding a copy.',
   },
   hardware: {
     q: 'When does the card ship?',
