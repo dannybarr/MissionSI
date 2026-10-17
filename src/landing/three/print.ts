@@ -85,16 +85,16 @@ export function drawHeroPrint(ctx: CanvasRenderingContext2D, W: number, H: numbe
   ctx.clearRect(0, 0, W, H)
   const at = (x: number, y: number) => cardToCanvas(x, y, W, H)
 
-  const word = at(-2.05, 1.28)
-  ctx.font = `500 ${0.56 * word.s}px Geist, "Schibsted Grotesk", sans-serif`
+  const word = at(-2.2, 1.35)
+  ctx.font = `500 ${0.46 * word.s}px Geist, "Schibsted Grotesk", sans-serif`
   ctx.fillStyle = 'rgba(214, 215, 219, 0.94)'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('Mission', word.x, word.y)
 
   if (earth) {
-    const e = at(2.68, 1.46)
-    const r = 0.5 * e.s
+    const e = at(2.99, 1.52)
+    const r = 0.56 * e.s
     ctx.save()
     ctx.beginPath()
     ctx.arc(e.x, e.y, r, 0, Math.PI * 2)
@@ -108,23 +108,17 @@ export function drawHeroPrint(ctx: CanvasRenderingContext2D, W: number, H: numbe
     ctx.stroke()
   }
 
-  const db = at(2.85, -1.38)
-  ctx.font = `500 ${0.74 * db.s}px Geist, "Schibsted Grotesk", sans-serif`
+  const db = at(2.95, -1.5)
+  ctx.font = `500 ${0.58 * db.s}px Geist, "Schibsted Grotesk", sans-serif`
   ctx.fillStyle = 'rgba(206, 207, 212, 0.92)'
   ctx.textAlign = 'center'
   ctx.fillText('DB', db.x, db.y)
 
-  const micro = at(3.45, -2.18)
-  ctx.font = `500 ${0.105 * micro.s}px "Geist Mono", ui-monospace, monospace`
-  ctx.fillStyle = 'rgba(176, 177, 182, 0.8)'
-  ctx.textAlign = 'right'
+  const micro = at(2.95, -2.05)
+  ctx.font = `500 ${0.13 * micro.s}px "Geist Mono", ui-monospace, monospace`
+  ctx.fillStyle = 'rgba(190, 191, 196, 0.8)'
+  ctx.textAlign = 'center'
+  ctx.letterSpacing = `${0.14 * micro.s}px`
   ctx.fillText('MS-01', micro.x, micro.y)
-
-  // engraved seat for the status light, top-right corner
-  const led = at(3.58, 2.12)
-  ctx.beginPath()
-  ctx.arc(led.x, led.y, 0.11 * led.s, 0, Math.PI * 2)
-  ctx.strokeStyle = 'rgba(230, 236, 244, 0.35)'
-  ctx.lineWidth = Math.max(1, led.s * 0.02)
-  ctx.stroke()
+  ctx.letterSpacing = '0px'
 }

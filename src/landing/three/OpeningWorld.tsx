@@ -23,7 +23,7 @@ function StudioEnv() {
     const room = new RoomEnvironment()
     const tex = pmrem.fromScene(room, 0.04).texture
     scene.environment = tex
-    scene.environmentIntensity = 0.78
+    scene.environmentIntensity = 0.42
     return () => {
       scene.environment = null
       tex.dispose()

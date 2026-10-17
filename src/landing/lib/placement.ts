@@ -22,9 +22,9 @@ export type IdentityId = 'wordmark' | 'earth' | 'initials'
 export const TEASER_KEY = 'mission:teaser-placement'
 
 export const HOME_SLOTS: Record<IdentityId, XY> = {
-  wordmark: { x: -25, y: 16 },
-  earth: { x: 28, y: 17 },
-  initials: { x: 31, y: -14 },
+  wordmark: { x: -22, y: 13.5 },
+  earth: { x: 30, y: 15.2 },
+  initials: { x: 29.5, y: -15 },
 }
 
 export function saveTeaserPlacement(p: TeaserPlacement) {

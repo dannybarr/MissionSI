@@ -1,39 +1,37 @@
 import * as THREE from 'three'
 import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg'
 
-/** Card in centimetres. 86 × 55 mm, slim enough to read as a card, thick enough for a USB-C opening. */
-export const CARD = { w: 8.6, h: 5.5, t: 0.4 }
+/**
+ * Card in centimetres, measured off the front view of card-prototype-views.png.
+ * 86 × 55 mm. One rectangular notch on the top, one on the bottom (same station,
+ * just left of centre), and one on each short edge. The USB-C port sits in the left one.
+ */
+export const CARD = { w: 8.6, h: 5.5, t: 0.48 }
 
-const TOP_NOTCHES = [-1.28, 1.42]
-const BOTTOM_NOTCHES = [-1.42, 1.22]
+/** Notch along an axis: [start, end, depth], with a short machined ramp at each wall. */
+const LONG_NOTCH = { a: -1.23, b: 0.98, depth: 0.21, ramp: 0.14 }
+const SIDE_NOTCH = { a: -0.85, b: 1.05, depth: 0.17, ramp: 0.12 }
 
-function smooth(a: number, b: number, x: number) {
-  const t = Math.max(0, Math.min(1, (x - a) / (b - a || 1e-4)))
-  return t * t * t * (t * (t * 6 - 15) + 10)
+function cut(p: number, a: number, b: number, depth: number, ramp: number) {
+  const enter = Math.max(0, Math.min(1, (p - (a - ramp)) / ramp))
+  const exit = Math.max(0, Math.min(1, (p - b) / ramp))
+  return depth * (enter - exit)
 }
 
-function notch(x: number, centers: number[], half: number, ramp: number, depth: number) {
-  let d = 0
-  for (const c of centers) d += smooth(c - half - ramp, c - half, x) * (1 - smooth(c + half, c + half + ramp, x))
-  return d * depth
-}
-
-/** Closed outline, centred, y up. Two scoops on the top, two on the bottom, one on each side. */
-export function outlinePoints(inset: number, step = 0.04): THREE.Vector2[] {
+/** Closed outline, centred, y up. inset 0 is the outer rim; a larger inset drops the notches. */
+export function outlinePoints(inset: number, step = 0.035): THREE.Vector2[] {
   const W = CARD.w - inset * 2
   const H = CARD.h - inset * 2
-  const r = Math.max(0.05, 0.34 - inset * 0.4)
+  const r = Math.max(0.06, 0.32 - inset * 0.35)
   const x0 = -W / 2
   const x1 = W / 2
   const y0 = -H / 2
   const y1 = H / 2
-  const depth = Math.max(0, 0.168 - inset * 0.22)
-  const sideD = Math.max(0, 0.132 - inset * 0.2)
-  const half = 0.46
-  const ramp = 0.24
+  const long = inset > 0.04 ? { ...LONG_NOTCH, depth: 0 } : LONG_NOTCH
+  const side = inset > 0.04 ? { ...SIDE_NOTCH, depth: 0 } : SIDE_NOTCH
   const pts: THREE.Vector2[] = []
   const arc = (cx: number, cy: number, a0: number, a1: number) => {
-    const n = 7
+    const n = 8
     for (let i = 0; i <= n; i++) {
       const a = a0 + ((a1 - a0) * i) / n
       pts.push(new THREE.Vector2(cx + Math.cos(a) * r, cy + Math.sin(a) * r))
@@ -43,13 +41,13 @@ export function outlinePoints(inset: number, step = 0.04): THREE.Vector2[] {
     const n = Math.max(2, Math.ceil(Math.abs(to - from) / step))
     for (let i = 1; i < n; i++) pts.push(f(from + ((to - from) * i) / n))
   }
-  edge(x0 + r, x1 - r, (x) => new THREE.Vector2(x, y0 + notch(x, BOTTOM_NOTCHES, half, ramp, depth)))
+  edge(x0 + r, x1 - r, (x) => new THREE.Vector2(x, y0 + cut(x, long.a, long.b, long.depth, long.ramp)))
   arc(x1 - r, y0 + r, -Math.PI / 2, 0)
-  edge(y0 + r, y1 - r, (y) => new THREE.Vector2(x1 - notch(y, [0], 0.7, 0.26, sideD), y))
+  edge(y0 + r, y1 - r, (y) => new THREE.Vector2(x1 - cut(y, side.a, side.b, side.depth, side.ramp), y))
   arc(x1 - r, y1 - r, 0, Math.PI / 2)
-  edge(x1 - r, x0 + r, (x) => new THREE.Vector2(x, y1 - notch(x, TOP_NOTCHES, half, ramp, depth)))
+  edge(x1 - r, x0 + r, (x) => new THREE.Vector2(x, y1 - cut(x, long.a, long.b, long.depth, long.ramp)))
   arc(x0 + r, y1 - r, Math.PI / 2, Math.PI)
-  edge(y1 - r, y0 + r, (y) => new THREE.Vector2(x0 + notch(y, [0], 0.7, 0.26, sideD), y))
+  edge(y1 - r, y0 + r, (y) => new THREE.Vector2(x0 + cut(y, side.a, side.b, side.depth, side.ramp), y))
   arc(x0 + r, y0 + r, Math.PI, Math.PI * 1.5)
   return pts
 }
@@ -101,9 +99,9 @@ function subtract(base: THREE.BufferGeometry, tool: THREE.BufferGeometry) {
 }
 
 function portCutter(leftEdge: number) {
-  const g = new THREE.ExtrudeGeometry(capsule(0.86, 0.236), {
+  const g = new THREE.ExtrudeGeometry(capsule(0.9, 0.3), {
     depth: 0.95,
-    curveSegments: 10,
+    curveSegments: 12,
     bevelEnabled: false,
   })
   // Extrusion runs along +Z. Turn it so it runs from the left edge inward (+X),
@@ -135,24 +133,24 @@ let cached: CardGeos | null = null
 
 export function cardGeometries(): CardGeos {
   if (cached) return cached
-  const bevel = 0.028
+  const bevel = 0.05
   let body: THREE.BufferGeometry = new THREE.ExtrudeGeometry(shapeOf(0), {
     depth: CARD.t - bevel * 2,
     bevelEnabled: true,
     bevelThickness: bevel,
-    bevelSize: bevel,
+    bevelSize: 0.08,
     bevelSegments: 1,
-    curveSegments: 6,
+    curveSegments: 8,
   })
   body = centerZ(body)
   const front = body.boundingBox!.max.z
   const back = body.boundingBox!.min.z
   const left = body.boundingBox!.min.x
   body = subtract(body, portCutter(left))
-  body = subtract(body, pocketCutter(front, 0.055, 0.16))
+  body = subtract(body, pocketCutter(front, 0.09, 0.28))
   body = subtract(body, pocketBack(back))
 
-  const panel = new THREE.ExtrudeGeometry(shapeOf(0.2), {
+  const panel = new THREE.ExtrudeGeometry(shapeOf(0.32), {
     depth: 0.012,
     bevelEnabled: true,
     bevelThickness: 0.004,
@@ -171,33 +169,35 @@ export function cardGeometries(): CardGeos {
 }
 
 function pocketBack(back: number) {
-  const g = new THREE.ExtrudeGeometry(shapeOf(0.16), { depth: 0.05, curveSegments: 5, bevelEnabled: false })
+  const depth = 0.09
+  const g = new THREE.ExtrudeGeometry(shapeOf(0.28), { depth, curveSegments: 6, bevelEnabled: false })
   g.translate(0, 0, back - 0.012)
   return g
 }
 
 function portInsert() {
-  const depth = 0.62
-  const shellShape = capsule(0.8, 0.2)
-  shellShape.holes.push(new THREE.Path(capsule(0.74, 0.15).getPoints(16).reverse()))
-  const shell = new THREE.ExtrudeGeometry(shellShape, { depth: depth - 0.08, curveSegments: 8, bevelEnabled: false })
+  const depth = 0.58
+  const mouth = -CARD.w / 2 + SIDE_NOTCH.depth
+  const shellShape = capsule(0.86, 0.28)
+  shellShape.holes.push(new THREE.Path(capsule(0.78, 0.2).getPoints(20).reverse()))
+  const shell = new THREE.ExtrudeGeometry(shellShape, { depth: 0.16, curveSegments: 10, bevelEnabled: false })
   shell.rotateY(Math.PI / 2)
   shell.computeBoundingBox()
-  shell.translate(-CARD.w / 2 + 0.02 - shell.boundingBox!.min.x, 0, 0)
+  shell.translate(mouth - 0.012 - shell.boundingBox!.min.x, 0, 0)
 
-  const cavity = new THREE.ExtrudeGeometry(capsule(0.74, 0.15), { depth: 0.06, curveSegments: 8, bevelEnabled: false })
+  const cavity = new THREE.ExtrudeGeometry(capsule(0.78, 0.2), { depth: 0.05, curveSegments: 10, bevelEnabled: false })
   cavity.rotateY(Math.PI / 2)
   cavity.computeBoundingBox()
-  cavity.translate(-CARD.w / 2 + depth - cavity.boundingBox!.max.x, 0, 0)
+  cavity.translate(mouth + depth - cavity.boundingBox!.max.x, 0, 0)
 
-  const tongue = new THREE.BoxGeometry(0.28, 0.62, 0.05)
-  tongue.translate(-CARD.w / 2 + depth - 0.2, 0, 0)
+  const tongue = new THREE.BoxGeometry(0.26, 0.64, 0.045)
+  tongue.translate(mouth + depth - 0.18, 0, 0)
 
   const pins: THREE.BufferGeometry[] = []
   for (const z of [0.03, -0.03]) {
     for (let i = 0; i < 8; i++) {
       const p = new THREE.BoxGeometry(0.16, 0.028, 0.012)
-      p.translate(-CARD.w / 2 + depth - 0.28, (i - 3.5) * 0.055, z)
+      p.translate(-CARD.w / 2 + SIDE_NOTCH.depth + depth - 0.26, (i - 3.5) * 0.055, z)
       pins.push(p)
     }
   }

@@ -4,53 +4,59 @@ import { useId } from 'react'
 const W = 860
 const H = 550
 
-function outline(inset: number) {
-  const i = inset
-  const r = Math.max(6, 36 - i * 0.9)
-  const nd = 17
-  const sd = 13
-  const s = 22
-  const x1 = 300
-  const x2 = 560
-  const y1 = 178
-  const y2 = 372
-  const L = i
-  const T = i
-  const R = W - i
-  const B = H - i
+/** Outer rim. One machined notch on each long edge, one on each short edge. Units are 0.1 mm. */
+function outline() {
+  const r = 32
+  const x1 = 307
+  const x2 = 528
+  const nd = 21
+  const ramp = 14
+  const y1 = 170
+  const y2 = 360
+  const sd = 17
+  const sr = 12
   return [
-    `M${L + r} ${T}`,
-    `H${x1}`,
-    `L${x1 + s} ${T + nd}`,
-    `H${x2 - s}`,
-    `L${x2} ${T}`,
-    `H${R - r}`,
-    `A${r} ${r} 0 0 1 ${R} ${T + r}`,
-    `V${y1}`,
-    `L${R - sd} ${y1 + s}`,
-    `V${y2 - s}`,
-    `L${R} ${y2}`,
-    `V${B - r}`,
-    `A${r} ${r} 0 0 1 ${R - r} ${B}`,
+    `M${r} 0`,
+    `H${x1 - ramp}`,
+    `L${x1} ${nd}`,
     `H${x2}`,
-    `L${x2 - s} ${B - nd}`,
-    `H${x1 + s}`,
-    `L${x1} ${B}`,
-    `H${L + r}`,
-    `A${r} ${r} 0 0 1 ${L} ${B - r}`,
+    `L${x2 + ramp} 0`,
+    `H${W - r}`,
+    `A${r} ${r} 0 0 1 ${W} ${r}`,
+    `V${y1 - sr}`,
+    `L${W - sd} ${y1}`,
     `V${y2}`,
-    `L${L + sd} ${y2 - s}`,
-    `V${y1 + s}`,
-    `L${L} ${y1}`,
-    `V${T + r}`,
-    `A${r} ${r} 0 0 1 ${L + r} ${T}`,
+    `L${W} ${y2 + sr}`,
+    `V${H - r}`,
+    `A${r} ${r} 0 0 1 ${W - r} ${H}`,
+    `H${x2 + ramp}`,
+    `L${x2} ${H - nd}`,
+    `H${x1}`,
+    `L${x1 - ramp} ${H}`,
+    `H${r}`,
+    `A${r} ${r} 0 0 1 0 ${H - r}`,
+    `V${y2 + sr}`,
+    `L${sd} ${y2}`,
+    `V${y1}`,
+    `L0 ${y1 - sr}`,
+    `V${r}`,
+    `A${r} ${r} 0 0 1 ${r} 0`,
     'Z',
   ].join('')
 }
 
-const OUTER = outline(0)
-const GROOVE = outline(13)
-const FACE = outline(22)
+function rounded(inset: number) {
+  const r = 26
+  const L = inset
+  const T = inset
+  const R = W - inset
+  const B = H - inset
+  return `M${L + r} ${T}H${R - r}A${r} ${r} 0 0 1 ${R} ${T + r}V${B - r}A${r} ${r} 0 0 1 ${R - r} ${B}H${L + r}A${r} ${r} 0 0 1 ${L} ${B - r}V${T + r}A${r} ${r} 0 0 1 ${L + r} ${T}Z`
+}
+
+const OUTER = outline()
+const GROOVE = rounded(30)
+const FACE = rounded(36)
 
 export interface CardFaceProps {
   alt?: string
@@ -65,7 +71,7 @@ export interface CardFaceProps {
   className?: string
 }
 
-export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Earth mark, Mission wordmark and DB initials', marks = true, plug = false, status = 0, ring = true, className = '' }: CardFaceProps) {
+export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Earth mark, Mission wordmark and DB initials', marks = true, plug = false, status = 0, ring = false, className = '' }: CardFaceProps) {
   const uid = useId().replace(/:/g, '')
   const id = (n: string) => `${n}-${uid}`
   const lit = Math.max(0, Math.min(1, status))
@@ -73,15 +79,15 @@ export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Eart
     <figure className={`card-face ${className}`}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
         <defs>
-          <linearGradient id={id('rim')} x1="0" y1="0" x2="0.35" y2="1">
-            <stop offset="0" stopColor="#3a3a3e" />
-            <stop offset="0.5" stopColor="#252528" />
-            <stop offset="1" stopColor="#1b1b1d" />
+          <linearGradient id={id('rim')} x1="0" y1="0" x2="0.2" y2="1">
+            <stop offset="0" stopColor="#3a3c40" />
+            <stop offset="0.18" stopColor="#1a1c20" />
+            <stop offset="1" stopColor="#101214" />
           </linearGradient>
           <linearGradient id={id('face')} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#4a4b50" />
-            <stop offset="0.55" stopColor="#3e3f44" />
-            <stop offset="1" stopColor="#36373b" />
+            <stop offset="0" stopColor="#1e2024" />
+            <stop offset="0.55" stopColor="#16181b" />
+            <stop offset="1" stopColor="#121416" />
           </linearGradient>
           <linearGradient id={id('sheen')} x1="0" y1="0" x2="0.6" y2="1">
             <stop offset="0" stopColor="#fff" stopOpacity="0.09" />
@@ -104,23 +110,23 @@ export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Eart
             <path d={FACE} />
           </clipPath>
           <clipPath id={id('earth')}>
-            <circle cx="710" cy="105" r="50" />
+            <circle cx="729" cy="123" r="56" />
           </clipPath>
         </defs>
 
         {plug && (
           <g className="card-port">
-            <rect x="6" y="248" width="16" height="54" rx="6" fill="#141416" />
-            <rect x="10" y="258" width="36" height="34" rx="10" fill="#0c0c0d" />
-            <rect x="18" y="268" width="22" height="6" rx="1" fill="#c7a46a" opacity="0.8" />
-            <rect x="18" y="278" width="22" height="6" rx="1" fill="#c7a46a" opacity="0.55" />
+            <rect x="-6" y="232" width="28" height="86" rx="14" fill={`url(#${id('plug')})`} />
+            <rect x="2" y="244" width="14" height="62" rx="8" fill="#0c0d0f" />
+            <rect x="6" y="258" width="8" height="14" rx="1" fill="#c7a46a" />
+            <rect x="6" y="276" width="8" height="14" rx="1" fill="#c7a46a" opacity="0.7" />
           </g>
         )}
 
         <path d={OUTER} fill={`url(#${id('rim')})`} />
         <path d={OUTER} fill="none" stroke="#fff" strokeOpacity="0.14" strokeWidth="1.5" />
         <path d={GROOVE} fill="none" stroke="#111113" strokeWidth="2.5" />
-        <path d={outline(14.5)} fill="none" stroke="#fff" strokeOpacity="0.07" strokeWidth="1" />
+        <path d={rounded(16)} fill="none" stroke="#fff" strokeOpacity="0.06" strokeWidth="1" />
         <path d={FACE} fill={`url(#${id('face')})`} />
         <g clipPath={`url(#${id('clip')})`}>
           <rect width={W} height={H} fill={`url(#${id('sheen')})`} />
@@ -129,15 +135,15 @@ export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Eart
 
         {marks && (
           <g className="card-marks">
-            <image href="/assets/nasa/earth-240.webp" x="660" y="55" width="100" height="100" clipPath={`url(#${id('earth')})`} preserveAspectRatio="xMidYMid slice" />
-            <text x="180" y="139" textAnchor="middle" fill="#a7a7ac" fontFamily="Geist, 'Schibsted Grotesk', sans-serif" fontSize="70" fontWeight="400" letterSpacing="-1.5">
+            <image href="/assets/nasa/earth-240.webp" x="673" y="67" width="112" height="112" clipPath={`url(#${id('earth')})`} preserveAspectRatio="xMidYMid slice" />
+            <text x="210" y="148" textAnchor="middle" fill="#c8c9cd" fontFamily="Geist, 'Schibsted Grotesk', sans-serif" fontSize="46" fontWeight="500">
               Mission
             </text>
-            <text x="740" y="448" textAnchor="middle" fill="#a7a7ac" fontFamily="Geist, sans-serif" fontSize="92" fontWeight="400" letterSpacing="-2">
+            <text x="725" y="440" textAnchor="middle" fill="#c4c5c9" fontFamily="Geist, sans-serif" fontSize="58" fontWeight="500">
               DB
             </text>
-            <text x="808" y="514" textAnchor="end" fill="#6f6f74" fontFamily="'Geist Mono', ui-monospace, monospace" fontSize="10.5" letterSpacing="1.6">
-              MISSION MS-01 / DESIGNED IN STUDIO
+            <text x="725" y="492" textAnchor="middle" fill="#8d8e93" fontFamily="'Geist Mono', ui-monospace, monospace" fontSize="9" letterSpacing="3.2">
+              MS-01
             </text>
           </g>
         )}

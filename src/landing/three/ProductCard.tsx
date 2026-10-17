@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { CARD, cardGeometries } from './geometry'
 import { PRINT } from './print'
@@ -29,53 +28,42 @@ function beadTexture() {
   return tex
 }
 
-export function ProductCard({ print, glow }: { print: THREE.Texture | null; glow: { v: number } }) {
+export function ProductCard({ print, glow: _glow }: { print: THREE.Texture | null; glow: { v: number } }) {
   const geos = useMemo(() => cardGeometries(), [])
-  const lamp = useRef<THREE.PointLight>(null)
   const mats = useMemo(() => {
     const rough = beadTexture()
     const body = new THREE.MeshPhysicalMaterial({
-      color: '#3c3e43',
-      metalness: 1,
+      color: '#2c2e33',
+      metalness: 0.92,
       roughness: 0.46,
       roughnessMap: rough,
       bumpMap: rough,
-      bumpScale: 0.015,
-      envMapIntensity: 0.9,
-      clearcoat: 0.12,
-      clearcoatRoughness: 0.35,
+      bumpScale: 0.01,
+      envMapIntensity: 0.65,
+      clearcoat: 0.16,
+      clearcoatRoughness: 0.42,
     })
     const face = new THREE.MeshPhysicalMaterial({
-      color: '#32343a',
+      color: '#121416',
       metalness: 1,
-      roughness: 0.68,
+      roughness: 0.82,
       roughnessMap: rough,
       bumpMap: rough,
-      bumpScale: 0.01,
-      envMapIntensity: 0.55,
+      bumpScale: 0.008,
+      envMapIntensity: 0.22,
     })
-    const ink = new THREE.MeshPhysicalMaterial({
+    const ink = new THREE.MeshBasicMaterial({
       color: '#ffffff',
-      metalness: 0.05,
-      roughness: 0.58,
       transparent: true,
       depthWrite: false,
       polygonOffset: true,
       polygonOffsetFactor: -4,
       polygonOffsetUnits: -4,
-      envMapIntensity: 0.25,
     })
-    const steel = new THREE.MeshPhysicalMaterial({ color: '#b7bcc2', metalness: 1, roughness: 0.32, envMapIntensity: 1.1 })
+    const steel = new THREE.MeshPhysicalMaterial({ color: '#c5c9ce', metalness: 1, roughness: 0.22, envMapIntensity: 1.4 })
     const dark = new THREE.MeshStandardMaterial({ color: '#101113', roughness: 0.72, metalness: 0.15 })
     const gold = new THREE.MeshPhysicalMaterial({ color: '#d4b56e', metalness: 1, roughness: 0.24 })
-    const led = new THREE.MeshPhysicalMaterial({
-      color: '#dbe4ee',
-      emissive: new THREE.Color('#e9f3ff'),
-      emissiveIntensity: 0.2,
-      roughness: 0.18,
-      metalness: 0,
-    })
-    return { rough, body, face, ink, steel, dark, gold, led }
+    return { rough, body, face, ink, steel, dark, gold }
   }, [])
 
   const backPanel = useMemo(() => {
@@ -94,7 +82,6 @@ export function ProductCard({ print, glow }: { print: THREE.Texture | null; glow
       mats.steel.dispose()
       mats.dark.dispose()
       mats.gold.dispose()
-      mats.led.dispose()
       mats.rough.dispose()
     },
     [backPanel, mats],
@@ -105,11 +92,6 @@ export function ProductCard({ print, glow }: { print: THREE.Texture | null; glow
     mats.ink.needsUpdate = true
   }
 
-  useFrame(() => {
-    mats.led.emissiveIntensity = 0.12 + glow.v * 2.6
-    if (lamp.current) lamp.current.intensity = glow.v * 0.35
-  })
-
   const plane = { w: CARD.w - PRINT.inset * 2, h: CARD.h - PRINT.inset * 2 }
 
   return (
@@ -118,7 +100,7 @@ export function ProductCard({ print, glow }: { print: THREE.Texture | null; glow
       <mesh geometry={geos.panel} material={mats.face} receiveShadow />
       <mesh geometry={backPanel} material={mats.face} receiveShadow />
       {print && (
-        <mesh position={[0, 0, geos.faceZ + 0.006]} material={mats.ink}>
+        <mesh position={[0, 0, geos.faceZ + 0.02]} material={mats.ink}>
           <planeGeometry args={[plane.w, plane.h]} />
         </mesh>
       )}
@@ -126,11 +108,6 @@ export function ProductCard({ print, glow }: { print: THREE.Texture | null; glow
       <mesh geometry={geos.cavity} material={mats.dark} />
       <mesh geometry={geos.tongue} material={mats.dark} />
       <mesh geometry={geos.pins} material={mats.gold} />
-      <mesh position={[3.58, 2.12, geos.faceZ + 0.02]}>
-        <sphereGeometry args={[0.07, 18, 12]} />
-        <primitive object={mats.led} attach="material" />
-        <pointLight ref={lamp} color="#d5e6ff" distance={2.4} decay={2} intensity={0} />
-      </mesh>
     </group>
   )
 }

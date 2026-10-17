@@ -21,9 +21,9 @@ interface KitItem {
 }
 
 const IDENTITY: KitItem[] = [
-  { id: 'earth', kind: 'identity', label: 'Earth', hint: 'NASA’s Blue Marble, printed in full colour.', w: 10, h: 10, home: HOME_SLOTS.earth },
-  { id: 'wordmark', kind: 'identity', label: 'Mission', hint: 'The wordmark, upper left.', w: 27, h: 6.5, home: HOME_SLOTS.wordmark },
-  { id: 'initials', kind: 'identity', label: 'DB', hint: 'Your initials, lower right.', w: 11, h: 7, home: HOME_SLOTS.initials },
+  { id: 'earth', kind: 'identity', label: 'Earth', hint: 'NASA’s Blue Marble, printed in full colour.', w: 11.2, h: 11.2, home: HOME_SLOTS.earth },
+  { id: 'wordmark', kind: 'identity', label: 'Mission', hint: 'The wordmark, upper left.', w: 22, h: 4.6, home: HOME_SLOTS.wordmark },
+  { id: 'initials', kind: 'identity', label: 'DB', hint: 'Your initials, lower right.', w: 12, h: 5.8, home: HOME_SLOTS.initials },
 ]
 
 const HARDWARE: KitItem[] = FEATURES.map((f) => ({ id: f.id, kind: 'feature', label: f.short, hint: f.benefit, w: f.w, h: f.h, home: f.home }))
