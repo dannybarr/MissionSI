@@ -153,32 +153,56 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .fact p { margin: 0; color: var(--ink-soft); font-size: 15px; line-height: 1.45; }
 
 /* ---------- flags ---------- */
-.flags { position: relative; min-height: 112svh; background: var(--paper-2); overflow: hidden; display: grid; align-items: end; }
-.flag-cluster { position: absolute; inset: 0 0 0 30%; pointer-events: none; }
+.flags {
+  position: relative; min-height: 100svh; background: #f7f6f3; overflow: hidden;
+  display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr);
+  align-items: start; gap: 4vw; padding: clamp(72px, 10vh, 120px) 0 clamp(48px, 8vh, 80px) var(--gutter);
+}
+.flag-copy { position: relative; z-index: 3; max-width: 400px; padding-top: 0.5vh; }
+.flag-copy h2 { font-size: clamp(36px, 3.3vw, 56px); }
+.flag-copy p { margin: 0 0 14px; color: #3a3a40; font-size: 16px; }
+.legal { font-size: 11px !important; color: #6d6d74 !important; line-height: 1.5; margin-top: 22px !important; }
+.flag-cluster { position: relative; height: min(86vh, 820px); min-height: 560px; margin-right: -6vw; }
 .ribbon-list { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
-.ribbon { position: absolute; right: -8%; height: 60px; transform: rotate(var(--rot)); animation: ribbon-drift 11s ease-in-out infinite alternate; }
-.ribbon-unfurl { position: absolute; inset: 0; will-change: transform; }
+.ribbon {
+  --fold: 0%;
+  position: absolute; right: -4%; height: 11.2%;
+  transform: rotate(var(--rot)); transform-origin: 92% 50%;
+  filter: drop-shadow(0 14px 10px rgba(20, 16, 28, 0.22));
+  animation: ribbon-drift 8.5s ease-in-out infinite alternate;
+}
+.ribbon-slide { position: absolute; inset: 0; }
 .ribbon-cloth {
   position: absolute; inset: 0;
   background:
-    linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.22) 12%, rgba(0, 0, 0, 0.14) 24%, rgba(255, 255, 255, 0) 36%, rgba(255, 255, 255, 0.16) 52%, rgba(0, 0, 0, 0.1) 66%, rgba(255, 255, 255, 0) 80%) 0 0 / 220% 100%,
-    linear-gradient(180deg, color-mix(in srgb, var(--cloth) 80%, white) 0%, var(--cloth) 30%, color-mix(in srgb, var(--cloth) 78%, black) 50%, var(--cloth) 66%, color-mix(in srgb, var(--cloth) 90%, white) 100%);
-  clip-path: polygon(38px 0, 100% 0, 100% 100%, 38px 100%, 0 50%);
-  animation: ribbon-fold 7s linear infinite;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 22%, rgba(0, 0, 0, 0.22) 48%, rgba(255, 255, 255, 0.05) 62%, rgba(0, 0, 0, 0.28) 100%),
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--cloth) 78%, white) 0%,
+      var(--cloth) 14%,
+      color-mix(in srgb, var(--cloth) 58%, black) 31%,
+      var(--cloth) 47%,
+      color-mix(in srgb, var(--cloth) 86%, white) 63%,
+      color-mix(in srgb, var(--cloth) 50%, black) 82%,
+      var(--cloth) 100%) 0 0 / 160% 100%,
+    repeating-linear-gradient(90deg, transparent 0 2px, rgba(255, 255, 255, 0.045) 2px 3px);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 46px 50%);
+  animation: ribbon-fold 14s linear infinite;
   animation-delay: inherit;
 }
-.ribbon::after { content: ''; position: absolute; left: 30px; right: 0; bottom: -18px; height: 18px; background: radial-gradient(60% 100% at 50% 0, rgba(20, 20, 22, 0.1), transparent); pointer-events: none; }
-.ribbon-logo { position: relative; z-index: 1; height: 100%; display: flex; align-items: center; gap: 12px; padding-left: 58px; color: var(--ink); }
-.ribbon-svg { width: 24px; height: 24px; display: grid; }
-.ribbon-svg svg { width: 24px; height: 24px; fill: var(--ink); display: block; }
-.ribbon-svg svg path { fill: var(--ink); }
-.ribbon-name { font-size: 15px; font-weight: 560; letter-spacing: -0.02em; white-space: nowrap; }
-@keyframes ribbon-drift { from { translate: 0 0; } to { translate: -22px 7px; } }
-@keyframes ribbon-fold { from { background-position: 120% 0, 0 0; } to { background-position: -100% 0, 0 0; } }
-.flag-copy { position: relative; z-index: 2; max-width: min(460px, 88vw); padding: 0 var(--gutter) 10vh; }
-.flag-copy h2 { font-size: clamp(34px, 3.4vw, 54px); }
-.flag-copy p { margin: 0 0 14px; color: #3a3a40; font-size: 16px; }
-.legal { font-size: 11px !important; color: #6d6d74 !important; line-height: 1.5; margin-top: 22px !important; }
+.ribbon-logo {
+  position: absolute; z-index: 1; left: 22%; right: 4%; top: 0; bottom: 0;
+  display: flex; align-items: center; gap: 14px; color: var(--ink);
+}
+.ribbon-svg { width: 30px; height: 30px; display: grid; flex: none; }
+.ribbon-svg svg { width: 30px; height: 30px; display: block; }
+.ribbon-svg:not(.is-color) svg,
+.ribbon-svg:not(.is-color) svg path { fill: currentColor; }
+.ribbon-name {
+  font-size: clamp(18px, 1.7vw, 26px); font-weight: 560; letter-spacing: -0.03em;
+  white-space: nowrap; line-height: 1;
+}
+@keyframes ribbon-drift { from { translate: 0 0; } to { translate: -14px 5px; } }
+@keyframes ribbon-fold { from { background-position: 0 0, 40% 0, 0 0; } to { background-position: 0 0, -80% 0, 0 0; } }
 
 /* ---------- forest ---------- */
 .forest { position: relative; min-height: 110svh; background: var(--night); color: var(--on-night); overflow: hidden; display: grid; align-items: end; }
@@ -454,8 +478,7 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   .kit-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
   .kit-hint { grid-column: 1 / -1; grid-row: 2; padding: 0 4px 4px; }
   .token { width: 100%; }
-  .flag-cluster { inset: 0 0 34% 0; }
-  .flag-copy { padding-top: 66svh; }
+  .flags { grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 2vw; }
   .site-footer { grid-template-columns: 1fr 1fr; }
   .tray-stage { max-height: none; }
 }
@@ -505,14 +528,15 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   .hero-specs { margin-left: 0; }
   .statement-lines { font-size: clamp(44px, 13vw, 64px); }
   .fact { min-height: 200px; }
-  .flags { min-height: 0; }
-  .flag-cluster { inset: 0 0 auto 0; height: 60svh; }
-  .flag-copy { padding-top: 64svh; }
+  .flags { display: block; min-height: 0; padding-right: 0; }
+  .flag-cluster { height: 78svh; min-height: 460px; margin-top: 28px; }
+  .flag-copy { max-width: none; padding-right: var(--gutter); }
   .plug-readout { font-size: 10.5px; padding: 9px 13px; max-width: calc(100% - 2 * var(--gutter)); }
-  .ribbon { height: 44px; }
-  .ribbon-logo { padding-left: 46px; gap: 9px; }
-  .ribbon-svg, .ribbon-svg svg { width: 19px; height: 19px; }
-  .ribbon-name { font-size: 13px; }
+  .ribbon { height: 9.4%; }
+  .ribbon-logo { left: 40px; gap: 8px; }
+  .ribbon-svg, .ribbon-svg svg { width: 18px; height: 18px; }
+  .ribbon-name { font-size: 15px; }
+  .ribbon-cloth { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 28px 50%); }
   .forest-copy p { font-size: 16px; }
   .console { grid-template-columns: 1fr; }
   .teaser-stage { position: sticky; top: 8px; z-index: 5; min-height: 0; aspect-ratio: 1.25; padding: 0; }
