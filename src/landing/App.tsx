@@ -6,7 +6,7 @@ import { Flags } from '@/landing/sections/Flags'
 import { Forest } from '@/landing/sections/Forest'
 import { HowItWorks } from '@/landing/sections/HowItWorks'
 import { StudioTeaser } from '@/landing/sections/StudioTeaser'
-import { DockScroll } from '@/landing/sections/DockScroll'
+import { PlugSequence } from '@/landing/sections/PlugSequence'
 import { Tray } from '@/landing/sections/Tray'
 import { Faq } from '@/landing/sections/Faq'
 import { Close, Footer } from '@/landing/sections/Close'
@@ -84,8 +84,8 @@ export default function LandingApp() {
         <Flags reduced={reduced} />
         <Forest reduced={reduced} />
         <HowItWorks reduced={reduced} />
-        <StudioTeaser />
-        <DockScroll reduced={reduced} />
+        <StudioTeaser reduced={reduced} />
+        <PlugSequence reduced={reduced} />
         <Tray reduced={reduced} />
         <Faq />
         <Close />

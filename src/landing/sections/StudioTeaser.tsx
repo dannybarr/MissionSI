@@ -1,161 +1,701 @@
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import gsap from 'gsap'
+import { Bluetooth, CircleDot, Cpu, MapPin, Mic, Nfc, Plus, Vibrate, X } from 'lucide-react'
 import { CardFace } from '@/landing/components/CardFace'
-import { HOME_SLOTS, saveTeaserPlacement, type TeaserPlacement } from '@/landing/lib/placement'
 import { Magnetic } from '@/landing/components/Magnetic'
+import { HOME_SLOTS, saveTeaserPlacement, type IdentityId, type TeaserPlacement, type XY } from '@/landing/lib/placement'
+import { CARD_MM, FEATURE_BY_ID, FEATURES, indicativeTotal, type FeatureId } from '@/shared/card-features'
 
-type ChipId = keyof TeaserPlacement
+type ItemId = IdentityId | FeatureId
 
-const CHIPS: { id: ChipId; label: string; start: { x: number; y: number } }[] = [
-  { id: 'wordmark', label: 'Mission', start: { x: -18, y: -8 } },
-  { id: 'earth', label: 'Earth', start: { x: 18, y: -36 } },
-  { id: 'initials', label: 'DB', start: { x: 22, y: 34 } },
-]
-
-function clamp(n: number, a: number, b: number) {
-  return Math.max(a, Math.min(b, n))
+interface KitItem {
+  id: ItemId
+  kind: 'identity' | 'feature'
+  label: string
+  hint: string
+  w: number
+  h: number
+  home: XY
 }
 
-export function StudioTeaser() {
-  const stage = useRef<HTMLDivElement>(null)
+const IDENTITY: KitItem[] = [
+  { id: 'earth', kind: 'identity', label: 'Earth', hint: 'NASA’s Blue Marble, printed in full colour.', w: 10, h: 10, home: HOME_SLOTS.earth },
+  { id: 'wordmark', kind: 'identity', label: 'Mission', hint: 'The wordmark, upper left.', w: 27, h: 6.5, home: HOME_SLOTS.wordmark },
+  { id: 'initials', kind: 'identity', label: 'DB', hint: 'Your initials, lower right.', w: 11, h: 7, home: HOME_SLOTS.initials },
+]
+
+const HARDWARE: KitItem[] = FEATURES.map((f) => ({ id: f.id, kind: 'feature', label: f.short, hint: f.benefit, w: f.w, h: f.h, home: f.home }))
+
+const ALL: KitItem[] = [...IDENTITY, ...HARDWARE]
+const BY_ID = Object.fromEntries(ALL.map((i) => [i.id, i])) as Record<ItemId, KitItem>
+
+const ICONS: Record<FeatureId, ReactNode> = {
+  nfc: <Nfc />,
+  gps: <MapPin />,
+  mic: <Mic />,
+  haptics: <Vibrate />,
+  secure: <Cpu />,
+  bluetooth: <Bluetooth />,
+  status: <CircleDot />,
+}
+
+const SNAP_MM = 9
+const MAGNET_MM = 6
+const LONG_PRESS_MS = 140
+
+const isFeature = (id: ItemId): id is FeatureId => id in FEATURE_BY_ID
+
+function clampItem(item: KitItem, p: XY): XY {
+  const mx = CARD_MM.w / 2 - 4.5 - item.w / 2
+  const my = CARD_MM.h / 2 - 4 - item.h / 2
+  const r = (v: number) => Math.round(v * 2) / 2
+  return { x: r(Math.max(-mx, Math.min(mx, p.x))), y: r(Math.max(-my, Math.min(my, p.y))) }
+}
+
+const pct = (p: XY) => ({ left: `${50 + (p.x / CARD_MM.w) * 100}%`, top: `${50 - (p.y / CARD_MM.h) * 100}%` })
+const size = (i: KitItem) => ({ width: `${(i.w / CARD_MM.w) * 100}%`, height: `${(i.h / CARD_MM.h) * 100}%` })
+
+interface Drag {
+  id: ItemId
+  from: 'kit' | 'card'
+  pointerId: number
+  pointerType: string
+  startX: number
+  startY: number
+  /** pointer offset inside the grabbed element */
+  ox: number
+  oy: number
+  x: number
+  y: number
+  lastX: number
+  rot: number
+  active: boolean
+  over: boolean
+  snapTo: ItemId | null
+  timer: number
+}
+
+interface Flip {
+  id: ItemId
+  cx: number
+  cy: number
+  rot: number
+  scale: number
+}
+
+export function StudioTeaser({ reduced }: { reduced: boolean }) {
+  const [placed, setPlaced] = useState<Partial<Record<ItemId, XY>>>({})
+  const [dragId, setDragId] = useState<ItemId | null>(null)
+  const [tip, setTip] = useState<ItemId | null>(null)
+  const [announce, setAnnounce] = useState('')
   const card = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<Record<ChipId, { x: number; y: number; snapped: boolean }>>({
-    wordmark: { ...CHIPS[0].start, snapped: false },
-    earth: { ...CHIPS[1].start, snapped: false },
-    initials: { ...CHIPS[2].start, snapped: false },
-  })
-  const drag = useRef<{ id: ChipId; dx: number; dy: number } | null>(null)
+  const cardBody = useRef<HTMLDivElement>(null)
+  const ghost = useRef<HTMLDivElement>(null)
+  const ripple = useRef<HTMLSpanElement>(null)
+  const drag = useRef<Drag | null>(null)
+  const flip = useRef<Flip | null>(null)
+  const raf = useRef(0)
+  const tipTimer = useRef(0)
+  const nodes = useRef(new Map<ItemId, HTMLElement>())
+  const tokens = useRef(new Map<ItemId, HTMLElement>())
 
-  const toMm = (clientX: number, clientY: number) => {
+  const features = useMemo(() => HARDWARE.filter((h) => placed[h.id]).map((h) => h.id as FeatureId), [placed])
+  const total = indicativeTotal(features)
+
+  const flashTip = useCallback((id: ItemId) => {
+    window.clearTimeout(tipTimer.current)
+    setTip(id)
+    tipTimer.current = window.setTimeout(() => setTip((t) => (t === id ? null : t)), 2600)
+  }, [])
+
+  const toMm = (clientX: number, clientY: number): XY | null => {
     const r = card.current?.getBoundingClientRect()
-    if (!r) return { x: 0, y: 0 }
-    const x = ((clientX - (r.left + r.width / 2)) / r.width) * 86
-    const y = -((clientY - (r.top + r.height / 2)) / r.height) * 54
-    return { x: clamp(x, -38, 38), y: clamp(y, -22, 22) }
+    if (!r) return null
+    return { x: ((clientX - r.left) / r.width - 0.5) * CARD_MM.w, y: -((clientY - r.top) / r.height - 0.5) * CARD_MM.h }
   }
 
-  const snapIfClose = (id: ChipId, mm: { x: number; y: number }) => {
-    const home = HOME_SLOTS[id]
-    const near = Math.hypot(mm.x - home.x, mm.y - home.y) < 10
-    return near ? { ...home, snapped: true } : { ...mm, snapped: false }
+  const overCard = (clientX: number, clientY: number) => {
+    const r = card.current?.getBoundingClientRect()
+    if (!r) return false
+    const pad = Math.min(24, r.width * 0.03)
+    return clientX > r.left - pad && clientX < r.right + pad && clientY > r.top - pad && clientY < r.bottom + pad
   }
 
-  const onPointerDown = (id: ChipId, e: React.PointerEvent) => {
-    const r = stage.current?.getBoundingClientRect()
-    if (!r) return
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    const cur = pos[id]
-    drag.current = { id, dx: e.clientX - (r.left + r.width / 2 + (cur.x / 100) * r.width), dy: e.clientY - (r.top + r.height / 2 + (cur.y / 100) * r.height) }
+  /** Where a drop at this pointer would land, after snapping. */
+  const resolveDrop = (id: ItemId, d: Drag, clientX: number, clientY: number): { at: XY; snapped: boolean } | null => {
+    const r = card.current?.getBoundingClientRect()
+    const item = BY_ID[id]
+    if (!r) return null
+    // centre of the grabbed thing, not the fingertip
+    const cx = clientX - d.ox
+    const cy = clientY - d.oy
+    const mm = toMm(cx, cy)
+    if (!mm) return null
+    const near = Math.hypot(mm.x - item.home.x, mm.y - item.home.y)
+    if (item.kind === 'identity' && near < SNAP_MM) return { at: item.home, snapped: true }
+    if (item.kind === 'feature' && near < MAGNET_MM) return { at: item.home, snapped: true }
+    return { at: clampItem(item, mm), snapped: false }
   }
 
-  const onPointerMove = (e: React.PointerEvent) => {
+  const thunk = useCallback(
+    (clientX: number, clientY: number) => {
+      if (navigator.vibrate) navigator.vibrate(10)
+      if (reduced) return
+      const r = card.current?.getBoundingClientRect()
+      const body = cardBody.current
+      if (body) gsap.fromTo(body, { scale: 0.986 }, { scale: 1, duration: 0.9, ease: 'elastic.out(1, 0.38)', overwrite: true })
+      const rp = ripple.current
+      if (rp && r) {
+        gsap.set(rp, { left: clientX - r.left, top: clientY - r.top })
+        gsap.fromTo(rp, { scale: 0.2, opacity: 0.55 }, { scale: 2.6, opacity: 0, duration: 0.8, ease: 'expo.out', overwrite: true })
+      }
+    },
+    [reduced],
+  )
+
+  const place = useCallback(
+    (id: ItemId, at: XY, from: Flip | null, label: 'added' | 'moved') => {
+      flip.current = from
+      setPlaced((p) => ({ ...p, [id]: at }))
+      const item = BY_ID[id]
+      if (label === 'added') setAnnounce(`${item.kind === 'feature' ? FEATURE_BY_ID[id as FeatureId].label : item.label} added. ${item.hint}`)
+      if (isFeature(id)) flashTip(id)
+    },
+    [flashTip],
+  )
+
+  const remove = useCallback(
+    (id: ItemId) => {
+      const el = nodes.current.get(id)
+      const token = tokens.current.get(id)
+      const done = () => {
+        setPlaced((p) => {
+          const n = { ...p }
+          delete n[id]
+          return n
+        })
+        setTip((t) => (t === id ? null : t))
+        if (token && !reduced) gsap.fromTo(token, { scale: 1.12 }, { scale: 1, duration: 0.7, ease: 'elastic.out(1, 0.45)' })
+      }
+      const item = BY_ID[id]
+      setAnnounce(`${item.kind === 'feature' ? FEATURE_BY_ID[id as FeatureId].label : item.label} removed.`)
+      if (!el || reduced) return done()
+      gsap.to(el, { scale: 0.55, opacity: 0, y: '-=10', duration: 0.32, ease: 'power2.in', onComplete: done })
+    },
+    [reduced],
+  )
+
+  // FLIP: spring a freshly placed element from wherever the pointer released it.
+  useLayoutEffect(() => {
+    const f = flip.current
+    if (!f) return
+    flip.current = null
+    const el = nodes.current.get(f.id)
+    if (!el) return
+    gsap.killTweensOf(el)
+    if (reduced) {
+      gsap.set(el, { clearProps: 'transform,opacity' })
+      return
+    }
+    const r = el.getBoundingClientRect()
+    const dx = f.cx - (r.left + r.width / 2)
+    const dy = f.cy - (r.top + r.height / 2)
+    gsap.fromTo(
+      el,
+      { x: dx, y: dy, rotation: f.rot, scale: f.scale, opacity: 1 },
+      { x: 0, y: 0, rotation: 0, scale: 1, duration: 0.95, ease: 'elastic.out(1, 0.52)', clearProps: 'transform' },
+    )
+  }, [placed, reduced])
+
+  /* ---------------- dragging ---------------- */
+
+  const ghostPos = useRef({ x: 0, y: 0, rot: 0, scale: 1, opacity: 1 })
+
+  const writeGhost = useCallback(() => {
+    const g = ghost.current
+    const p = ghostPos.current
+    if (!g) return
+    g.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0) translate(-50%, -50%) rotate(${p.rot.toFixed(2)}deg) scale(${p.scale.toFixed(3)})`
+    g.style.opacity = String(p.opacity)
+  }, [])
+
+  const paintGhost = useCallback(() => {
+    raf.current = 0
     const d = drag.current
-    const r = stage.current?.getBoundingClientRect()
-    if (!d || !r) return
-    const x = ((e.clientX - d.dx - (r.left + r.width / 2)) / r.width) * 100
-    const y = ((e.clientY - d.dy - (r.top + r.height / 2)) / r.height) * 100
-    setPos((p) => ({ ...p, [d.id]: { x: clamp(x, -46, 46), y: clamp(y, -46, 46), snapped: false } }))
-  }
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    const d = drag.current
-    drag.current = null
     if (!d) return
-    const mm = toMm(e.clientX, e.clientY)
-    const next = snapIfClose(d.id, mm)
-    if (next.snapped) {
-      const r = stage.current?.getBoundingClientRect()
-      const cr = card.current?.getBoundingClientRect()
-      if (r && cr) {
-        const px = ((next.x / 86) * cr.width) / r.width * 100
-        const py = ((-next.y / 54) * cr.height) / r.height * 100
-        setPos((p) => ({ ...p, [d.id]: { x: px, y: py, snapped: true } }))
-        if (navigator.vibrate) navigator.vibrate(12)
+    const p = ghostPos.current
+    const vx = d.x - d.lastX
+    d.lastX = d.x
+    const target = Math.max(-14, Math.min(14, vx * 0.9))
+    d.rot += (target - d.rot) * 0.2
+    const scaleTarget = d.over ? 0.94 : 1.06
+    p.x = d.x - d.ox
+    p.y = d.y - d.oy
+    p.rot = d.rot
+    p.scale += (scaleTarget - p.scale) * 0.25
+    p.opacity = 1
+    writeGhost()
+    if (Math.abs(d.rot) > 0.05 || Math.abs(target) > 0.05 || Math.abs(scaleTarget - p.scale) > 0.002) raf.current = requestAnimationFrame(paintGhost)
+  }, [writeGhost])
+
+  const schedule = useCallback(() => {
+    if (!raf.current) raf.current = requestAnimationFrame(paintGhost)
+  }, [paintGhost])
+
+  const setReceiving = (on: boolean, snapTo: ItemId | null) => {
+    const c = card.current
+    if (!c) return
+    c.classList.toggle('is-receiving', on)
+    c.querySelectorAll<HTMLElement>('[data-slot]').forEach((s) => s.classList.toggle('is-hot', s.dataset.slot === snapTo))
+  }
+
+  const blockScroll = useCallback((e: TouchEvent) => {
+    if (drag.current?.active) e.preventDefault()
+  }, [])
+
+  const begin = (d: Drag) => {
+    d.active = true
+    window.addEventListener('touchmove', blockScroll, { passive: false })
+    if (d.from === 'card') {
+      const el = nodes.current.get(d.id)
+      if (el) gsap.to(el, { opacity: 0, scale: 0.9, duration: 0.18, ease: 'power2.out' })
+    }
+    setDragId(d.id)
+    setTip(null)
+    document.documentElement.classList.add('is-dragging')
+  }
+
+  const end = () => {
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerup', onUp)
+    window.removeEventListener('pointercancel', onCancel)
+    window.removeEventListener('touchmove', blockScroll)
+    document.documentElement.classList.remove('is-dragging')
+    setReceiving(false, null)
+  }
+
+  const onMove = (e: PointerEvent) => {
+    const d = drag.current
+    if (!d || e.pointerId !== d.pointerId) return
+    d.x = e.clientX
+    d.y = e.clientY
+    if (!d.active) {
+      const moved = Math.hypot(e.clientX - d.startX, e.clientY - d.startY)
+      if (d.pointerType === 'touch' && d.from === 'kit') {
+        // a swipe before the long-press is a page scroll
+        if (moved > 10) {
+          window.clearTimeout(d.timer)
+          drag.current = null
+          end()
+        }
         return
       }
+      if (moved < 4) return
+      window.clearTimeout(d.timer)
+      begin(d)
     }
-    setPos((p) => ({ ...p, [d.id]: { ...p[d.id], snapped: false } }))
+    const over = overCard(e.clientX, e.clientY)
+    const res = over ? resolveDrop(d.id, d, e.clientX, e.clientY) : null
+    const snapTo = res?.snapped && BY_ID[d.id].kind === 'identity' ? d.id : null
+    if (over !== d.over || snapTo !== d.snapTo) {
+      d.over = over
+      d.snapTo = snapTo
+      setReceiving(over, snapTo)
+    }
+    schedule()
   }
 
-  const nudge = (id: ChipId, key: string) => {
-    const step = 4
-    const delta = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[key]
-    if (!delta) return
-    setPos((p) => ({
-      ...p,
-      [id]: { x: clamp(p[id].x + delta[0], -46, 46), y: clamp(p[id].y + delta[1], -46, 46), snapped: false },
-    }))
+  const finish = (e: PointerEvent, cancelled: boolean) => {
+    const d = drag.current
+    if (!d || e.pointerId !== d.pointerId) return
+    drag.current = null
+    window.clearTimeout(d.timer)
+    end()
+    if (!d.active) {
+      // a tap: on the card it reveals the benefit, in the kit it does nothing (Add is the button)
+      if (d.from === 'card' && !cancelled) flashTip(d.id)
+      return
+    }
+    const g = ghost.current
+    const gr = g?.getBoundingClientRect()
+    const from: Flip | null = gr ? { id: d.id, cx: gr.left + gr.width / 2, cy: gr.top + gr.height / 2, rot: d.rot, scale: 1.08 } : null
+    const over = !cancelled && overCard(e.clientX, e.clientY)
+    if (over) {
+      const res = resolveDrop(d.id, d, e.clientX, e.clientY)
+      setDragId(null)
+      if (res) {
+        place(d.id, res.at, from, d.from === 'kit' ? 'added' : 'moved')
+        thunk(from?.cx ?? e.clientX, from?.cy ?? e.clientY)
+      }
+      return
+    }
+    if (d.from === 'card') {
+      setDragId(null)
+      if (cancelled) {
+        const el = nodes.current.get(d.id)
+        if (el) gsap.to(el, { opacity: 1, scale: 1, duration: 0.3, ease: 'power2.out', clearProps: 'transform' })
+      } else remove(d.id)
+      return
+    }
+    // dropped outside: glide back to the kit token
+    const token = tokens.current.get(d.id)?.querySelector('.token')
+    const tr = token?.getBoundingClientRect()
+    cancelAnimationFrame(raf.current)
+    raf.current = 0
+    if (!g || !tr || reduced) {
+      setDragId(null)
+      return
+    }
+    gsap.to(ghostPos.current, {
+      x: tr.left + tr.width / 2,
+      y: tr.top + tr.height / 2,
+      rot: 0,
+      scale: 1,
+      opacity: 0.2,
+      duration: 0.5,
+      ease: 'expo.out',
+      onUpdate: writeGhost,
+      onComplete: () => setDragId(null),
+    })
   }
 
-  const placement = (): TeaserPlacement => {
-    const r = stage.current?.getBoundingClientRect()
+  const onUp = (e: PointerEvent) => finish(e, false)
+  const onCancel = (e: PointerEvent) => finish(e, true)
+
+  const startDrag = (id: ItemId, from: 'kit' | 'card', e: ReactPointerEvent<HTMLElement>) => {
+    if (e.button !== 0 || drag.current) return
+    const r = e.currentTarget.getBoundingClientRect()
+    const d: Drag = {
+      id,
+      from,
+      pointerId: e.pointerId,
+      pointerType: e.pointerType,
+      startX: e.clientX,
+      startY: e.clientY,
+      ox: e.clientX - (r.left + r.width / 2),
+      oy: e.clientY - (r.top + r.height / 2),
+      x: e.clientX,
+      y: e.clientY,
+      lastX: e.clientX,
+      rot: 0,
+      active: false,
+      over: false,
+      snapTo: null,
+      timer: 0,
+    }
+    // the ghost is a chip; grab it by its centre when lifting from the card
+    if (from === 'card') {
+      d.ox = 0
+      d.oy = 0
+    }
+    drag.current = d
+    if (e.pointerType === 'touch' && from === 'kit') {
+      d.timer = window.setTimeout(() => {
+        if (drag.current === d && !d.active) {
+          begin(d)
+          if (navigator.vibrate) navigator.vibrate(6)
+          schedule()
+        }
+      }, LONG_PRESS_MS)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onCancel)
+  }
+
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(raf.current)
+      window.clearTimeout(tipTimer.current)
+      window.removeEventListener('touchmove', blockScroll)
+      document.documentElement.classList.remove('is-dragging')
+    },
+    [blockScroll],
+  )
+
+  useLayoutEffect(() => {
+    const d = drag.current
+    if (dragId && d) {
+      gsap.killTweensOf(ghostPos.current)
+      Object.assign(ghostPos.current, { x: d.x - d.ox, y: d.y - d.oy, rot: 0, scale: 1, opacity: 1 })
+      writeGhost()
+      schedule()
+    }
+  }, [dragId, schedule, writeGhost])
+
+  /* ---------------- keyboard ---------------- */
+
+  const addFromKit = (id: ItemId) => {
+    if (placed[id]) return remove(id)
+    const token = tokens.current.get(id)
+    const tr = token?.getBoundingClientRect()
+    place(id, BY_ID[id].home, tr ? { id, cx: tr.left + tr.width / 2, cy: tr.top + tr.height / 2, rot: -6, scale: 1.1 } : null, 'added')
     const cr = card.current?.getBoundingClientRect()
-    const out = {} as TeaserPlacement
-    for (const id of ['wordmark', 'earth', 'initials'] as ChipId[]) {
-      if (pos[id].snapped) {
-        out[id] = { ...HOME_SLOTS[id] }
-        continue
-      }
-      if (!r || !cr) {
-        out[id] = { ...HOME_SLOTS[id] }
-        continue
-      }
-      const cx = r.left + r.width / 2 + (pos[id].x / 100) * r.width
-      const cy = r.top + r.height / 2 + (pos[id].y / 100) * r.height
-      out[id] = toMm(cx, cy)
+    if (cr) {
+      const h = BY_ID[id].home
+      thunk(cr.left + (0.5 + h.x / CARD_MM.w) * cr.width, cr.top + (0.5 - h.y / CARD_MM.h) * cr.height)
     }
-    return out
   }
 
-  const go = () => {
-    saveTeaserPlacement(placement())
+  const onPlacedKey = (id: ItemId, e: ReactKeyboardEvent<HTMLElement>) => {
+    const step = e.shiftKey ? 5 : 1
+    const delta: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }
+    if (delta[e.key]) {
+      e.preventDefault()
+      const cur = placed[id]
+      if (!cur) return
+      const next = clampItem(BY_ID[id], { x: cur.x + delta[e.key][0], y: cur.y + delta[e.key][1] })
+      setPlaced((p) => ({ ...p, [id]: next }))
+      setAnnounce(`${BY_ID[id].label} at ${next.x} by ${next.y} millimetres.`)
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault()
+      remove(id)
+      tokens.current.get(id)?.querySelector<HTMLButtonElement>('.kit-add')?.focus()
+    }
   }
+
+  const reset = () => {
+    for (const id of Object.keys(placed) as ItemId[]) remove(id)
+  }
+
+  const save = () => {
+    const out: TeaserPlacement = { features: [] }
+    for (const i of IDENTITY) {
+      const p = placed[i.id]
+      if (p) out[i.id as IdentityId] = p
+    }
+    for (const h of HARDWARE) {
+      const p = placed[h.id]
+      if (p) out.features!.push({ id: h.id as FeatureId, ...p })
+    }
+    if (Object.keys(placed).length) saveTeaserPlacement(out)
+  }
+
+  const count = Object.keys(placed).length
+  const dragItem = dragId ? BY_ID[dragId] : null
 
   return (
-    <section className="teaser" id="design">
-      <div className="teaser-copy">
-        <p className="eyebrow">Studio</p>
-        <h2>Drag onto your card.</h2>
-        <p>Place the Earth, the wordmark and your initials. They spring into place. Studio opens with that layout.</p>
-      </div>
-      <div
-        className="teaser-stage"
-        ref={stage}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
-        <div className="teaser-card" ref={card}>
-          <CardFace marks={false} alt="Blank Mission card, ready for your marks" />
-          {CHIPS.map((c) => (
-            <span key={c.id} className={`slot ${pos[c.id].snapped ? 'filled' : ''}`} data-slot={c.id} aria-hidden="true">
-              {c.label}
-            </span>
-          ))}
+    <section className="teaser" id="design" aria-labelledby="teaser-title">
+      <header className="teaser-head">
+        <p className="eyebrow" data-reveal>
+          <i /> Studio preview
+        </p>
+        <h2 id="teaser-title" data-split>
+          Drag onto your card.
+        </h2>
+        <p className="teaser-sub" data-reveal>
+          Place the Earth, the wordmark and your initials. Then add hardware modules and see what each one is for. Studio opens with exactly this layout.
+        </p>
+      </header>
+
+      <div className="teaser-grid">
+        <div className="teaser-stage">
+          <div className="teaser-mat" aria-hidden="true" />
+          <div className="teaser-card" ref={card} role="group" aria-label={`Your card. ${count ? `${count} item${count > 1 ? 's' : ''} placed.` : 'Nothing placed yet.'}`}>
+            <div className="teaser-card-body" ref={cardBody}>
+              <CardFace marks={false} ring={false} alt="Blank Mission card, ready for your marks" />
+              <div className="teaser-layer">
+                {IDENTITY.map((i) =>
+                  placed[i.id] ? null : (
+                    <span key={i.id} className="slot" data-slot={i.id} style={{ ...pct(i.home), ...size(i) }} aria-hidden="true">
+                      <span>{i.label}</span>
+                    </span>
+                  ),
+                )}
+                {ALL.map((item) => {
+                  const p = placed[item.id]
+                  if (!p) return null
+                  const feature = isFeature(item.id) ? FEATURE_BY_ID[item.id] : null
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      ref={(el) => {
+                        if (el) nodes.current.set(item.id, el)
+                        else nodes.current.delete(item.id)
+                      }}
+                      className={`placed placed-${item.id} ${tip === item.id ? 'show-tip' : ''}`}
+                      style={{ ...pct(p), ...size(item) }}
+                      onPointerDown={(e) => startDrag(item.id, 'card', e)}
+                      onKeyDown={(e) => onPlacedKey(item.id, e)}
+                      onFocus={() => setTip(item.id)}
+                      onBlur={() => setTip((t) => (t === item.id ? null : t))}
+                      onMouseEnter={() => setTip(item.id)}
+                      onMouseLeave={() => setTip((t) => (t === item.id ? null : t))}
+                      aria-label={`${feature ? feature.label : item.label} on the card. ${item.hint} Arrow keys move it, Delete removes it, or drag it off the card.`}
+                      aria-describedby={`tip-${item.id}`}
+                    >
+                      {item.id === 'earth' && <img src="/assets/nasa/earth.webp" alt="" draggable={false} />}
+                      {item.id === 'wordmark' && <span className="pw">Mission</span>}
+                      {item.id === 'initials' && <span className="pi">DB</span>}
+                      {feature && <span className="pf" dangerouslySetInnerHTML={{ __html: feature.svg }} />}
+                      <span className="tip" role="tooltip" id={`tip-${item.id}`}>
+                        <b>{feature ? feature.short : item.label}</b> {item.hint}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <span className="drop-ripple" ref={ripple} aria-hidden="true" />
+          </div>
+          <p className="stage-hint" aria-hidden="true">
+            {count ? 'Drag a piece off the card to remove it.' : 'Press and drag a piece onto the card.'}
+          </p>
         </div>
-        {CHIPS.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            className={`chip ${pos[c.id].snapped ? 'snapped' : ''}`}
-            style={{ transform: `translate(-50%, -50%) translate(${pos[c.id].x}%, ${pos[c.id].y}%)` }}
-            onPointerDown={(e) => onPointerDown(c.id, e)}
-            onKeyDown={(e) => {
-              if (e.key.startsWith('Arrow')) {
-                e.preventDefault()
-                nudge(c.id, e.key)
-              }
-            }}
-            aria-label={`Drag the ${c.label} onto the card. Arrow keys nudge it.`}
-          >
-            {c.id === 'earth' ? <img src="/assets/nasa/earth.webp" alt="" draggable={false} /> : c.label}
-          </button>
-        ))}
+
+        <aside className="kit" aria-label="Pieces you can place">
+          <KitGroup title="Identity">
+            {IDENTITY.map((i) => (
+              <KitRow
+                key={i.id}
+                item={i}
+                placed={!!placed[i.id]}
+                dragging={dragId === i.id}
+                tokenRef={(el) => (el ? tokens.current.set(i.id, el) : tokens.current.delete(i.id))}
+                onPointerDown={(e) => !placed[i.id] && startDrag(i.id, 'kit', e)}
+                onAdd={() => addFromKit(i.id)}
+              />
+            ))}
+          </KitGroup>
+          <KitGroup title="Hardware modules" note="Concepts we’re exploring">
+            {HARDWARE.map((i) => (
+              <KitRow
+                key={i.id}
+                item={i}
+                placed={!!placed[i.id]}
+                dragging={dragId === i.id}
+                tokenRef={(el) => (el ? tokens.current.set(i.id, el) : tokens.current.delete(i.id))}
+                onPointerDown={(e) => !placed[i.id] && startDrag(i.id, 'kit', e)}
+                onAdd={() => addFromKit(i.id)}
+              />
+            ))}
+          </KitGroup>
+
+          <div className="kit-summary">
+            <div className="kit-summary-head">
+              <h3>On your card</h3>
+              {count > 0 && (
+                <button type="button" className="kit-reset" onClick={reset}>
+                  Clear
+                </button>
+              )}
+            </div>
+            {features.length ? (
+              <ul className="feature-list">
+                {features.map((id) => (
+                  <li key={id}>
+                    <span className="fl-icon" aria-hidden="true">
+                      {ICONS[id]}
+                    </span>
+                    <span className="fl-text">
+                      <b>{FEATURE_BY_ID[id].label}</b>
+                      <span>{FEATURE_BY_ID[id].benefit}</span>
+                    </span>
+                    <button type="button" className="fl-remove" onClick={() => remove(id)} aria-label={`Remove ${FEATURE_BY_ID[id].label}`}>
+                      <X />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="feature-empty">No hardware modules yet. The base card holds your memory, encrypted.</p>
+            )}
+            {features.length > 0 && (
+              <p className="est" data-testid="text-indicative-price">
+                <span>Est. add-ons, indicative only</span>
+                <b>+£{total}</b>
+              </p>
+            )}
+            <p className="est-fine">
+              Founding target £249 for the base card. Module figures are rough concept estimates, not prices, quotes or an offer. We’re not taking orders.
+            </p>
+            <Magnetic className="kit-cta-wrap">
+              <a className="btn btn-ink kit-cta" href="/studio?from=teaser" onClick={save} data-testid="link-teaser-studio">
+                Design and reserve yours <span aria-hidden="true">→</span>
+              </a>
+            </Magnetic>
+          </div>
+        </aside>
       </div>
-      <Magnetic>
-        <a className="btn btn-ink" href="/studio?from=teaser" onClick={go}>
-          Design and reserve yours <span aria-hidden="true">→</span>
-        </a>
-      </Magnetic>
+
+      <p className="sr-only" aria-live="polite">
+        {announce}
+      </p>
+
+      {dragItem && (
+        <div className={`ghost ghost-${dragItem.kind}`} ref={ghost} aria-hidden="true">
+          <Token item={dragItem} />
+        </div>
+      )}
     </section>
+  )
+}
+
+function KitGroup({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <div className="kit-group">
+      <h3>
+        {title}
+        {note && <span>{note}</span>}
+      </h3>
+      <ul>{children}</ul>
+    </div>
+  )
+}
+
+function Token({ item }: { item: KitItem }) {
+  return (
+    <span className={`token token-${item.kind}`}>
+      <span className="token-icon">
+        {item.id === 'earth' ? (
+          <img src="/assets/nasa/earth.webp" alt="" draggable={false} />
+        ) : item.id === 'wordmark' ? (
+          <span className="token-glyph">M</span>
+        ) : item.id === 'initials' ? (
+          <span className="token-glyph">DB</span>
+        ) : (
+          ICONS[item.id as FeatureId]
+        )}
+      </span>
+      <span className="token-label">{item.label}</span>
+    </span>
+  )
+}
+
+function KitRow({
+  item,
+  placed,
+  dragging,
+  tokenRef,
+  onPointerDown,
+  onAdd,
+}: {
+  item: KitItem
+  placed: boolean
+  dragging: boolean
+  tokenRef: (el: HTMLElement | null) => void
+  onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void
+  onAdd: () => void
+}) {
+  const name = item.kind === 'feature' ? FEATURE_BY_ID[item.id as FeatureId].label : item.label
+  return (
+    <li className={`kit-row ${placed ? 'is-placed' : ''} ${dragging ? 'is-lifted' : ''}`} ref={tokenRef}>
+      <span className="kit-handle" onPointerDown={onPointerDown} onContextMenu={(e) => e.preventDefault()} aria-hidden="true">
+        <Token item={item} />
+      </span>
+      <span className="kit-hint">{item.hint}</span>
+      <button type="button" className="kit-add" onClick={onAdd} aria-pressed={placed} aria-label={placed ? `Remove ${name} from the card` : `Add ${name} to the card`}>
+        {placed ? (
+          <>
+            <X aria-hidden="true" /> Remove
+          </>
+        ) : (
+          <>
+            <Plus aria-hidden="true" /> Add
+          </>
+        )}
+      </button>
+    </li>
   )
 }

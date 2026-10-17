@@ -51,7 +51,7 @@ export function Tray({ reduced }: { reduced: boolean }) {
           <p>A card. A key. The rest of a pocket. Pull it when you want an agent to know you. Put it back when you don’t.</p>
         </div>
         <div className="tray-stage" style={{ ['--tray' as string]: '#c9c3dc' }}>
-          <div className="tray-bed" />
+          <div className="tray-dish" />
           <div className="tray-card">
             <CardFace />
           </div>

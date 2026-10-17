@@ -12,7 +12,8 @@ import {
 } from 'react';
 import type { TeaserPlacement } from '@/landing/lib/placement';
 import { editActive } from './edit-variant';
-import { DEFAULT_VIEW, defaultDesign, defaultProject, initialVariants, markDefaults, materialFromPreset, MAX_MARKS, newMarkId, trimFor, uid } from './presets';
+import { earthMark, featureMark, initialsMark, wordmarkMark } from './features';
+import { DEFAULT_VIEW, defaultDesign, defaultProject, initialVariants, materialFromPreset, MAX_MARKS, newMarkId, trimFor, uid } from './presets';
 import { loadProject, loadView, saveProject, saveView, storageStatus, type LoadResult } from './storage';
 import type { BrandMark, CompId, Design, Project, Variant, ViewSettings } from './types';
 
@@ -349,43 +350,14 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       commit('teaser:' + uid(), (p) => {
         const src = p.variants.find((v) => v.id === 'v-graphite') ?? p.variants[0];
         const design = structuredClone(src.design);
-        design.body = materialFromPreset('missionBlue');
-        design.trim = trimFor('matteGrey');
-        const word: BrandMark = {
-          ...markDefaults(),
-          id: 'm-wordmark',
-          name: 'Wordmark',
-          text: 'Mission',
-          x: placement.wordmark.x,
-          y: placement.wordmark.y,
-          size: 6.2,
-          color: '#f4f3ef',
-        };
-        const earth: BrandMark = {
-          ...markDefaults(),
-          id: 'm-earth',
-          name: 'Earth',
-          kind: 'image',
-          asset: 'nasa-earth',
-          text: '',
-          svg: null,
-          finish: 'printed',
-          size: 14,
-          x: placement.earth.x,
-          y: placement.earth.y,
-        };
-        const initials: BrandMark = {
-          ...markDefaults(),
-          id: 'm-initials',
-          name: 'Initials',
-          text: 'DB',
-          weight: 500,
-          size: 7.2,
-          color: '#d5d3cc',
-          x: placement.initials.x,
-          y: placement.initials.y,
-        };
-        design.marks = [word, earth, initials];
+        design.body = materialFromPreset('matteGraphite');
+        design.trim = trimFor('blackTitanium');
+        const marks: BrandMark[] = [];
+        if (placement.wordmark) marks.push({ ...wordmarkMark(placement.wordmark.x, placement.wordmark.y), id: 'm-wordmark' });
+        if (placement.earth) marks.push({ ...earthMark(placement.earth.x, placement.earth.y), id: 'm-earth' });
+        if (placement.initials) marks.push({ ...initialsMark(placement.initials.x, placement.initials.y), id: 'm-initials' });
+        for (const f of placement.features ?? []) marks.push({ ...featureMark(f.id, f.x, f.y), id: newMarkId() });
+        design.marks = marks.slice(0, MAX_MARKS);
         const v: Variant = {
           id: 'v-' + uid(),
           name: 'Landing design',

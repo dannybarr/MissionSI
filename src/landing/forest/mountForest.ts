@@ -32,11 +32,15 @@ export function mountForest({ canvas, src, reduced }: ForestOptions): () => void
   const fps = reduced ? 0 : window.matchMedia('(max-width: 760px)').matches ? 16 : 24
   const minDelta = fps ? 1000 / fps : Infinity
 
-  const view = canvas.getContext('2d', { alpha: false })
-  const octx = off.getContext('2d', { alpha: false })
-  const bctx = blur.getContext('2d', { alpha: false })
-  const mctx = mask.getContext('2d')
-  if (!view || !octx || !bctx || !mctx) return () => {}
+  const view0 = canvas.getContext('2d', { alpha: false })
+  const octx0 = off.getContext('2d', { alpha: false })
+  const bctx0 = blur.getContext('2d', { alpha: false })
+  const mctx0 = mask.getContext('2d')
+  if (!view0 || !octx0 || !bctx0 || !mctx0) return () => {}
+  const view: CanvasRenderingContext2D = view0
+  const octx: CanvasRenderingContext2D = octx0
+  const bctx: CanvasRenderingContext2D = bctx0
+  const mctx: CanvasRenderingContext2D = mctx0
 
   const atlas = document.createElement('canvas')
   const cell = 28

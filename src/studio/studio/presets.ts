@@ -126,7 +126,7 @@ export const MATERIALS: Record<MaterialPreset, MaterialPresetDef> = {
   },
   matteGrey: {
     label: 'Matte grey',
-    note: 'Bead-blast dock metal',
+    note: 'Soft bead-blast grey',
     params: { color: '#8a8884', metalness: 0.9, roughness: 0.62, reflectivity: 0.7, direction: 0, brush: 0.08, grain: 0.85, clearcoat: 0 },
   },
 };

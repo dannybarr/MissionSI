@@ -1,16 +1,30 @@
-/** Placements chosen on the landing teaser, in millimetres on the card face. +x right, +y up. */
-export interface TeaserPlacement {
-  wordmark: { x: number; y: number }
-  earth: { x: number; y: number }
-  initials: { x: number; y: number }
+import { isFeatureId, type FeatureId } from '@/shared/card-features'
+
+export interface XY {
+  x: number
+  y: number
 }
+
+export interface FeaturePlacement extends XY {
+  id: FeatureId
+}
+
+/** What the visitor placed on the landing teaser, in millimetres on the card face. +x right, +y up. */
+export interface TeaserPlacement {
+  wordmark?: XY
+  earth?: XY
+  initials?: XY
+  features?: FeaturePlacement[]
+}
+
+export type IdentityId = 'wordmark' | 'earth' | 'initials'
 
 export const TEASER_KEY = 'mission:teaser-placement'
 
-export const HOME_SLOTS: TeaserPlacement = {
-  wordmark: { x: -24, y: 14 },
-  earth: { x: 22, y: 12 },
-  initials: { x: 26, y: -14 },
+export const HOME_SLOTS: Record<IdentityId, XY> = {
+  wordmark: { x: -25, y: 16 },
+  earth: { x: 28, y: 17 },
+  initials: { x: 31, y: -14 },
 }
 
 export function saveTeaserPlacement(p: TeaserPlacement) {
@@ -21,13 +35,27 @@ export function saveTeaserPlacement(p: TeaserPlacement) {
   }
 }
 
+function xy(v: unknown): XY | undefined {
+  if (!v || typeof v !== 'object') return undefined
+  const { x, y } = v as XY
+  return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : undefined
+}
+
 export function readTeaserPlacement(): TeaserPlacement | null {
   try {
     const raw = localStorage.getItem(TEASER_KEY)
     if (!raw) return null
-    const p = JSON.parse(raw) as TeaserPlacement
-    if (!p?.wordmark || !p.earth || !p.initials) return null
-    return p
+    const p = JSON.parse(raw) as Record<string, unknown>
+    if (!p || typeof p !== 'object') return null
+    const features = Array.isArray(p.features)
+      ? (p.features as unknown[]).flatMap((f) => {
+          const pos = xy(f)
+          const id = (f as { id?: unknown })?.id
+          return pos && isFeatureId(id) ? [{ id, ...pos }] : []
+        })
+      : []
+    const out: TeaserPlacement = { wordmark: xy(p.wordmark), earth: xy(p.earth), initials: xy(p.initials), features }
+    return out.wordmark || out.earth || out.initials || features.length ? out : null
   } catch {
     return null
   }

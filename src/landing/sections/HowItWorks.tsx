@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { CardFace } from '@/landing/components/CardFace'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -135,7 +136,9 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
             <div className="laptop" aria-hidden="true">
               <span>your laptop</span>
               <i className="port" />
-              <img className={plugged ? 'in' : ''} src="/media/front.webp" alt="" />
+              <div className={`laptop-card ${plugged ? 'in' : ''}`}>
+                <CardFace plug status={plugged ? 1 : 0} marks alt="" />
+              </div>
             </div>
             <button type="button" className="btn btn-ink plug" onClick={togglePlug} aria-pressed={plugged} data-testid="button-toggle-plug">
               {plugged ? 'Unplug the card' : 'Plug in the card'}

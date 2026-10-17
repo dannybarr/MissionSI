@@ -24,7 +24,7 @@ const ANSWERS: Record<string, { q: string; a: string }> = {
   },
   hardware: {
     q: 'When does the card ship?',
-    a: 'It doesn’t, yet. The custom card and the dock are a concept. Nothing has been manufactured, and there is no ship date. Software comes first, and it is still in development.',
+    a: 'It doesn’t, yet. The custom card, with its built-in USB-C connector, is a concept. Nothing has been manufactured, and there is no ship date. Software comes first, and it is still in development.',
   },
   orders: {
     q: 'Can I order one?',

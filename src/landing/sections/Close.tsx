@@ -90,7 +90,7 @@ export function Footer() {
       <div>
         <strong>Imagery</strong>
         <p>
-          Moon and Earth photographs: NASA (see IMAGE_CREDITS.md). Forest photograph and the tray objects are generated renders made for this page. Card artwork is drawn here, not a photograph of hardware.
+          Earth photograph: NASA, The Blue Marble. Forest photograph and the tray objects are generated renders made for this page. The card and laptop are drawn here, not photographs of hardware. Full list in IMAGE_CREDITS.md.
         </p>
       </div>
       <div>
