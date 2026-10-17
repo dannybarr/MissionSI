@@ -302,7 +302,7 @@ export function OpeningScene() {
     const t = pose.cam
     const lay = t * t * (3 - 2 * t)
     const cardX = mobile ? 0 : visW * 0.15
-    const cardY = mobile ? -visH * 0.3 : 0.15
+    const cardY = mobile ? 0 : 0.15
     const trayX = mobile ? 0 : 3.4
     hero.set(cardX, cardY, 0)
     slot.set(trayX - 0.6, TRAY_Y + 0.46 + pose.settle, -2.4)

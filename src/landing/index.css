@@ -580,9 +580,11 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   .mobile-nav a { padding: 14px 12px; border-radius: 12px; }
   .mission-site .mobile-nav a:last-child { background: var(--ink); color: #fff; margin-top: 4px; }
   .hero h1, .opening h1 { font-size: clamp(40px, 11.4vw, 56px); margin-bottom: 20px; }
-  .opening-copy { top: 92px; translate: none; left: var(--gutter); right: var(--gutter); width: auto; }
-  .opening-tray-copy { width: auto; right: var(--gutter); bottom: 28px; }
-  .opening-fallback { width: min(70vw, 340px); left: 50%; right: auto; top: 78%; translate: -50% -50%; }
+  .opening-pin { height: 100svh; overflow: hidden; }
+  .opening-copy { position: absolute; top: 84px; bottom: 30svh; left: var(--gutter); right: var(--gutter); width: auto; translate: none; padding: 0; }
+  .opening-view { position: absolute; left: 0; right: 0; bottom: 0; top: auto; height: 28svh; }
+  .opening-tray-copy { left: var(--gutter); right: var(--gutter); bottom: 12px; width: auto; }
+  .opening-fallback { width: min(72vw, 300px); left: 50%; right: auto; top: auto; bottom: 2svh; translate: -50% 0; }
   .hero-actions { margin-top: 26px; }
   .hero-actions > * { flex: 1 1 100%; }
   .hero-actions .magnetic .btn { width: 100%; }
