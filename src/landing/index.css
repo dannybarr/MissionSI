@@ -24,7 +24,7 @@
   --gutter: clamp(20px, 4.2vw, 80px);
   --section: clamp(96px, 16vh, 200px);
   --radius: 22px;
-  background: var(--paper);
+  background: #f0f0f0;
   color: var(--ink);
   font-family: var(--sans);
   font-size: 17px;
@@ -46,6 +46,8 @@
 .mission-site h1,
 .mission-site h2,
 .mission-site h3 { text-wrap: balance; }
+.mission-site main > section,
+.mission-site .site-footer { position: relative; z-index: 2; }
 .mission-site p { text-wrap: pretty; }
 .mission-site :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 6px; }
 .mission-site ::selection { background: #d8e3f5; }
@@ -100,7 +102,7 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 
 /* ---------- hero ---------- */
 .hero { position: relative; min-height: 100svh; padding: clamp(110px, 16vh, 170px) var(--gutter) clamp(48px, 8vh, 96px); display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: clamp(32px, 5vw, 96px); align-items: center; }
-.hero h1 { font-size: clamp(46px, 5.7vw, 104px); font-weight: 500; letter-spacing: -0.052em; line-height: 0.93; margin: 0 0 28px; max-width: 11.5ch; }
+.hero h1, .opening h1 { font-size: clamp(46px, 5.7vw, 104px); font-weight: 500; letter-spacing: -0.052em; line-height: 0.93; margin: 0 0 28px; max-width: 11.5ch; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
 .hero-object { position: relative; perspective: 1400px; }
 .hero-float { position: relative; z-index: 1; will-change: transform; }
@@ -116,6 +118,27 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .live-status .st-glow,
 .live-status .st-dot { opacity: var(--status, 1); }
 .live-status .st-ring { stroke: color-mix(in srgb, #e6f1ff calc(var(--status, 1) * 100%), #6a6a70); stroke-opacity: calc(0.6 + var(--status, 1) * 0.4); }
+
+/* ---------- opening: spin, then the tray ---------- */
+.opening { background: transparent; }
+.opening-pin { position: relative; height: 100svh; }
+.opening-view { position: absolute; inset: 0; }
+.opening-copy {
+  position: absolute; z-index: 2; left: var(--gutter); top: 50%; width: min(540px, 40vw);
+  translate: 0 -50%; pointer-events: none;
+}
+.opening-copy a, .opening-copy button { pointer-events: auto; }
+.opening-tray-copy {
+  position: absolute; z-index: 2; left: var(--gutter); bottom: 11vh; width: min(420px, 34vw);
+  opacity: 0; pointer-events: none;
+}
+.opening-tray-copy h2 { font-size: clamp(36px, 3.6vw, 60px); font-weight: 500; letter-spacing: -0.045em; line-height: 0.98; margin: 0 0 14px; }
+.opening-tray-copy p { margin: 0; color: var(--ink-soft); max-width: 28em; }
+.opening-fallback {
+  position: absolute; z-index: 2; right: 7vw; top: 50%; width: min(34vw, 480px);
+  translate: 0 -50%; pointer-events: none; transition: opacity 0.7s var(--ease);
+}
+.opening.is-ready .opening-fallback { opacity: 0; }
 
 /* ---------- statement ---------- */
 .statement { background: var(--paper); }
@@ -459,6 +482,8 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; align-content: start; padding-top: 108px; gap: 28px; }
   .hero-object { max-width: 560px; width: 100%; margin-inline: auto; }
+  .opening-copy { width: min(560px, 46vw); }
+  .opening-fallback { width: min(42vw, 420px); right: 4vw; }
 }
 
 /* ---------- phones ---------- */
@@ -470,7 +495,10 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   .mobile-nav { display: grid; position: absolute; top: 62px; left: 12px; right: 12px; background: #fff; border-radius: 18px; padding: 8px; box-shadow: 0 0 0 1px var(--line), 0 24px 48px -16px rgba(0, 0, 0, 0.2); animation: bubble-in 0.5s var(--ease) both; }
   .mobile-nav a { padding: 14px 12px; border-radius: 12px; }
   .mission-site .mobile-nav a:last-child { background: var(--ink); color: #fff; margin-top: 4px; }
-  .hero h1 { font-size: clamp(40px, 11.4vw, 56px); margin-bottom: 20px; }
+  .hero h1, .opening h1 { font-size: clamp(40px, 11.4vw, 56px); margin-bottom: 20px; }
+  .opening-copy { top: 92px; translate: none; left: var(--gutter); right: var(--gutter); width: auto; }
+  .opening-tray-copy { width: auto; right: var(--gutter); bottom: 28px; }
+  .opening-fallback { width: min(78vw, 420px); left: 50%; right: auto; top: 62%; translate: -50% -50%; }
   .hero-actions { margin-top: 26px; }
   .hero-actions > * { flex: 1 1 100%; }
   .hero-actions .magnetic .btn { width: 100%; }

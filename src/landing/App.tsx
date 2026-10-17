@@ -2,14 +2,13 @@ import '@/landing/index.css'
 import { useEffect, useState } from 'react'
 import { useLandingScroll } from '@/landing/lib/smooth'
 import { useReveals } from '@/landing/lib/reveal'
-import { Hero } from '@/landing/sections/Hero'
+import { Opening } from '@/landing/sections/Opening'
 import { Statement } from '@/landing/sections/Statement'
 import { Flags } from '@/landing/sections/Flags'
 import { Forest } from '@/landing/sections/Forest'
 import { HowItWorks } from '@/landing/sections/HowItWorks'
 import { StudioTeaser } from '@/landing/sections/StudioTeaser'
 import { PlugSequence } from '@/landing/sections/PlugSequence'
-import { Tray } from '@/landing/sections/Tray'
 import { Faq } from '@/landing/sections/Faq'
 import { Close, Footer } from '@/landing/sections/Close'
 
@@ -95,14 +94,13 @@ export default function LandingApp() {
       </a>
       <Nav />
       <main>
-        <Hero reduced={reduced} />
+        <Opening reduced={reduced} />
         <Statement reduced={reduced} />
         <Flags reduced={reduced} />
         <Forest reduced={reduced} />
         <HowItWorks reduced={reduced} />
         <StudioTeaser reduced={reduced} />
         <PlugSequence reduced={reduced} />
-        <Tray reduced={reduced} />
         <Faq reduced={reduced} />
         <Close />
       </main>

@@ -48,7 +48,7 @@ export function Tray({ reduced }: { reduced: boolean }) {
             <i /> Everyday carry
           </p>
           <h2 data-split>It lives with the things you already take.</h2>
-          <p data-reveal>A card. A key. The rest of a pocket. Plug it in when you want an agent to know you. Put it back when you don’t.</p>
+          <p data-reveal>A card. A key. The rest of a pocket. Connect it when you want an agent to know you. Put it away when you don’t.</p>
         </div>
         <div className="tray-stage">
           <div className="tray-dish" aria-hidden="true">
