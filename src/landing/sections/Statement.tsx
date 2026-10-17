@@ -4,7 +4,7 @@ import { EASE, gsap } from '@/landing/lib/motion'
 const LINES = ['Your memory.', 'Any agent.', 'Nobody else.']
 
 const FACTS = [
-  { k: 'On you', d: 'Encrypted on a card you carry. Unplug, and future access stops.' },
+  { k: 'On you', d: 'Encrypted on a card you carry. Disconnect, and future access stops.' },
   { k: 'Any agent', d: 'Claude, ChatGPT, Grok and any client that speaks MCP. None of them keeps the source.' },
   { k: 'No cloud copy', d: 'There is no Mission server holding your memory.' },
   { k: 'Per agent', d: 'You grant what each session may read. The rest stays on the card.' },

@@ -71,7 +71,7 @@ export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Eart
   const lit = Math.max(0, Math.min(1, status))
   return (
     <figure className={`card-face ${className}`}>
-      <svg viewBox={plug ? `-58 0 ${W + 58} ${H}` : `0 0 ${W} ${H}`} role="img" aria-label={alt}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={alt}>
         <defs>
           <linearGradient id={id('rim')} x1="0" y1="0" x2="0.35" y2="1">
             <stop offset="0" stopColor="#3a3a3e" />
@@ -109,11 +109,11 @@ export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Eart
         </defs>
 
         {plug && (
-          <g className="card-plug">
-            <rect x="-56" y="254" width="80" height="42" rx="13" fill={`url(#${id('plug')})`} />
-            <rect x="8" y="248" width="14" height="54" rx="4" fill="#1b1b1d" />
-            <rect x="-48" y="266" width="40" height="18" rx="6" fill="#2a2b2e" />
-            <rect x="-44" y="272" width="32" height="6" rx="2" fill="#c7a46a" opacity="0.85" />
+          <g className="card-port">
+            <rect x="6" y="248" width="16" height="54" rx="6" fill="#141416" />
+            <rect x="10" y="258" width="36" height="34" rx="10" fill="#0c0c0d" />
+            <rect x="18" y="268" width="22" height="6" rx="1" fill="#c7a46a" opacity="0.8" />
+            <rect x="18" y="278" width="22" height="6" rx="1" fill="#c7a46a" opacity="0.55" />
           </g>
         )}
 

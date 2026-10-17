@@ -293,7 +293,7 @@ export function OpeningScene() {
     const height = size.height
     if (!camera || width < 2 || height < 2) return
     const mobile = width < 760
-    const fraction = mobile ? 0.68 : width < 1100 ? 0.42 : 0.31
+    const fraction = mobile ? 0.62 : width < 1100 ? 0.4 : 0.31
     const aspect = width / height
     const fov = 16
     const dist = CARD.w / (fraction * 2 * Math.tan((fov * Math.PI) / 360) * aspect)
@@ -302,7 +302,7 @@ export function OpeningScene() {
     const t = pose.cam
     const lay = t * t * (3 - 2 * t)
     const cardX = mobile ? 0 : visW * 0.15
-    const cardY = mobile ? -visH * 0.05 : 0.15
+    const cardY = mobile ? -visH * 0.3 : 0.15
     const trayX = mobile ? 0 : 3.4
     hero.set(cardX, cardY, 0)
     slot.set(trayX - 0.6, TRAY_Y + 0.46 + pose.settle, -2.4)
