@@ -280,10 +280,17 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .teaser h2 { font-size: clamp(42px, 5.4vw, 92px); }
 .teaser-sub { margin: 0; max-width: 36em; color: var(--ink-soft); font-size: 18px; }
 .teaser-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 420px); gap: clamp(20px, 2.4vw, 40px); align-items: start; }
-.teaser-stage { position: sticky; top: 88px; z-index: 5; display: grid; place-items: center; min-height: clamp(420px, 44vw, 660px); border-radius: 28px; overflow: visible; isolation: isolate; }
+.teaser-stage { position: relative; z-index: 5; height: min(78vh, 780px); min-height: 560px; border-radius: 28px; overflow: visible; isolation: isolate; }
 .teaser-mat { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: radial-gradient(120% 90% at 50% 40%, #f7f7f8 0%, var(--paper-2) 60%, #ebebed 100%); box-shadow: inset 0 0 0 1px var(--line); }
 .teaser-mat::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background-image: radial-gradient(rgba(20, 20, 22, 0.09) 1px, transparent 1.2px); background-size: 22px 22px; mask-image: radial-gradient(70% 70% at 50% 50%, #000, transparent); -webkit-mask-image: radial-gradient(70% 70% at 50% 50%, #000, transparent); }
-.teaser-card { position: relative; width: min(640px, 84%); container-type: inline-size; }
+.teaser-card { position: absolute; left: 50%; top: 48%; width: min(520px, 44%); translate: -50% -50%; container-type: inline-size; z-index: 2; }
+.teaser-view { aspect-ratio: 86 / 55; }
+.scatter { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.scatter .kit-row { position: absolute; translate: -50% -50%; pointer-events: auto; width: max-content; grid-template-columns: auto auto; }
+.scatter .kit-hint { display: none; }
+.teaser-below { max-width: 680px; margin: 28px auto 0; }
+.placed.is-printed > :not(.tip) { opacity: 0; }
+.teaser-card-body:has(.teaser-view) .slot { display: none; }
 .teaser-card::after { content: ''; position: absolute; inset: -16px; border-radius: 34px; border: 1.5px dashed rgba(31, 79, 168, 0.4); opacity: 0; transform: scale(0.985); transition: opacity 0.4s, transform 0.6s var(--ease); pointer-events: none; }
 .teaser-card.is-receiving::after { opacity: 1; transform: scale(1); }
 .teaser-card-body { position: relative; transform-origin: 50% 50%; }
@@ -539,7 +546,9 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   .ribbon-cloth { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 28px 50%); }
   .forest-copy p { font-size: 16px; }
   .console { grid-template-columns: 1fr; }
-  .teaser-stage { position: sticky; top: 8px; z-index: 5; min-height: 0; aspect-ratio: 1.25; padding: 0; }
+  .teaser-stage { position: relative; top: auto; height: 92svh; min-height: 520px; }
+  .teaser-card { width: min(78vw, 420px); }
+  .scatter .kit-row { grid-template-columns: auto; }
   .teaser-mat { box-shadow: inset 0 0 0 1px var(--line), 0 18px 30px -24px rgba(20, 20, 22, 0.35); background: radial-gradient(120% 90% at 50% 40%, #f7f7f8 0%, var(--paper-2) 70%); }
   .teaser-card { width: 86%; }
   .stage-hint { bottom: 10px; font-size: 11.5px; }
@@ -587,7 +596,10 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .mission-site.reduced .plug-fine { position: static; translate: none; width: auto; }
 .mission-site.reduced .plug-steps { min-height: 0; gap: 14px; }
 .mission-site.reduced .plug-steps li { position: static; opacity: 1; transform: none; }
-.mission-site.reduced .teaser-stage { position: relative; top: auto; }
+.mission-site.reduced .teaser-stage { position: relative; top: auto; height: auto; min-height: 0; }
+.mission-site.reduced .teaser-card { position: relative; left: auto; top: auto; translate: none; width: min(520px, 88%); margin: 0 auto; }
+.mission-site.reduced .scatter { position: static; display: grid; gap: 8px; margin-top: 18px; pointer-events: auto; }
+.mission-site.reduced .scatter .kit-row { position: static; translate: none; width: auto; }
 .mission-site.reduced .plug-scene { --status: 1; --port: 1; }
 .mission-site.reduced .agent-chip[data-granted='true'] { --on: 1; }
 .mission-site.reduced .agent-chip[data-granted='false'] { --held: 1; }

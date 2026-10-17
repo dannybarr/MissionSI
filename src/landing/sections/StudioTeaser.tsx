@@ -4,6 +4,8 @@ import { Bluetooth, CircleDot, Cpu, MapPin, Mic, Nfc, Plus, Vibrate, X } from 'l
 import { CardFace } from '@/landing/components/CardFace'
 import { Magnetic } from '@/landing/components/Magnetic'
 import { HOME_SLOTS, saveTeaserPlacement, type IdentityId, type TeaserPlacement, type XY } from '@/landing/lib/placement'
+import { setTeaserArt } from '@/landing/three/teaserArt'
+import type { ArtItem } from '@/landing/three/print'
 import { CARD_MM, FEATURE_BY_ID, FEATURES, indicativeTotal, type FeatureId } from '@/shared/card-features'
 
 type ItemId = IdentityId | FeatureId
@@ -45,6 +47,26 @@ const LONG_PRESS_MS = 140
 
 const isFeature = (id: ItemId): id is FeatureId => id in FEATURE_BY_ID
 
+/** Random, non-overlapping spots around the card, as a percentage of the stage. */
+function scatterSpots(ids: string[]) {
+  const spots: Record<string, { left: string; top: string }> = {}
+  const taken: { x: number; y: number }[] = []
+  for (const id of ids) {
+    let x = 50
+    let y = 50
+    for (let n = 0; n < 48; n++) {
+      x = 10 + Math.random() * 80
+      y = 8 + Math.random() * 84
+      const onCard = Math.abs(x - 50) < 26 && Math.abs(y - 48) < 20
+      const crowded = taken.some((p) => Math.hypot(p.x - x, p.y - y) < 16)
+      if (!onCard && !crowded) break
+    }
+    taken.push({ x, y })
+    spots[id] = { left: `${x.toFixed(1)}%`, top: `${y.toFixed(1)}%` }
+  }
+  return spots
+}
+
 function clampItem(item: KitItem, p: XY): XY {
   const mx = CARD_MM.w / 2 - 4.5 - item.w / 2
   const my = CARD_MM.h / 2 - 4 - item.h / 2
@@ -85,6 +107,11 @@ interface Flip {
 
 export function StudioTeaser({ reduced }: { reduced: boolean }) {
   const [placed, setPlaced] = useState<Partial<Record<ItemId, XY>>>({})
+  const [spots, setSpots] = useState<Record<string, { left: string; top: string }> | null>(null)
+  useEffect(() => {
+    setSpots(scatterSpots(ALL.map((item) => item.id)))
+  }, [])
+  const view = useRef<HTMLDivElement>(null)
   const [dragId, setDragId] = useState<ItemId | null>(null)
   const [tip, setTip] = useState<ItemId | null>(null)
   const [announce, setAnnounce] = useState('')
@@ -101,6 +128,35 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
 
   const features = useMemo(() => HARDWARE.filter((h) => placed[h.id]).map((h) => h.id as FeatureId), [placed])
   const total = indicativeTotal(features)
+
+  useEffect(() => {
+    const art: ArtItem[] = []
+    for (const item of ALL) {
+      const p = placed[item.id]
+      if (!p) continue
+      const x = p.x / 10
+      const y = p.y / 10
+      if (item.id === 'wordmark') art.push({ kind: 'word', x, y, w: item.w / 10, h: item.h / 10, text: 'Mission' })
+      else if (item.id === 'initials') art.push({ kind: 'initials', x, y, w: item.w / 10, h: item.h / 10, text: 'DB' })
+      else if (item.id === 'earth') art.push({ kind: 'earth', x, y, w: item.w / 10, h: item.h / 10 })
+      else if (isFeature(item.id)) art.push({ kind: 'etch', x, y, w: item.w / 10, h: item.h / 10, svg: FEATURE_BY_ID[item.id].svg })
+    }
+    setTeaserArt(art)
+  }, [placed])
+
+  useEffect(() => {
+    if (reduced) return
+    let dead = false
+    let root: { unmount: () => void } | null = null
+    import('@/landing/three/TeaserWorld').then(({ mountTeaser }) => {
+      if (dead || !view.current) return
+      root = mountTeaser(view.current)
+    })
+    return () => {
+      dead = true
+      root?.unmount()
+    }
+  }, [reduced])
 
   const flashTip = useCallback((id: ItemId) => {
     window.clearTimeout(tipTimer.current)
@@ -488,12 +544,15 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
         </p>
       </header>
 
-      <div className="teaser-grid">
-        <div className="teaser-stage">
+      <div className="teaser-stage">
           <div className="teaser-mat" aria-hidden="true" />
           <div className="teaser-card" ref={card} role="group" aria-label={`Your card. ${count ? `${count} item${count > 1 ? 's' : ''} placed.` : 'Nothing placed yet.'}`}>
             <div className="teaser-card-body" ref={cardBody}>
-              <CardFace marks={false} ring={false} alt="Blank Mission card, ready for your marks" />
+              {reduced ? (
+                <CardFace marks={false} ring={false} alt="Blank Mission card, ready for your marks" />
+              ) : (
+                <div className="teaser-view" ref={view} />
+              )}
               <div className="teaser-layer">
                 {IDENTITY.map((i) =>
                   placed[i.id] ? null : (
@@ -514,7 +573,7 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
                         if (el) nodes.current.set(item.id, el)
                         else nodes.current.delete(item.id)
                       }}
-                      className={`placed placed-${item.id} ${tip === item.id ? 'show-tip' : ''}`}
+                      className={`placed placed-${item.id} ${tip === item.id ? 'show-tip' : ''} ${reduced ? '' : 'is-printed'}`}
                       style={{ ...pct(p), ...size(item) }}
                       onPointerDown={(e) => startDrag(item.id, 'card', e)}
                       onKeyDown={(e) => onPlacedKey(item.id, e)}
@@ -539,40 +598,26 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
             </div>
             <span className="drop-ripple" ref={ripple} aria-hidden="true" />
           </div>
+          <ul className="scatter" aria-label="Pieces you can place">
+            {spots && ALL.map((item) => (
+              <KitRow
+                key={item.id}
+                item={item}
+                placed={!!placed[item.id]}
+                dragging={dragId === item.id}
+                style={spots[item.id]}
+                tokenRef={(el) => (el ? tokens.current.set(item.id, el) : tokens.current.delete(item.id))}
+                onPointerDown={(e) => !placed[item.id] && startDrag(item.id, 'kit', e)}
+                onAdd={() => addFromKit(item.id)}
+              />
+            ))}
+          </ul>
           <p className="stage-hint" aria-hidden="true">
-            {count ? 'Drag a piece off the card to remove it.' : 'Press and drag a piece onto the card.'}
+            {count ? 'Drag a piece off the card to remove it.' : 'Drag a piece onto the card, or use Add.'}
           </p>
         </div>
 
-        <aside className="kit" aria-label="Pieces you can place">
-          <KitGroup title="Identity">
-            {IDENTITY.map((i) => (
-              <KitRow
-                key={i.id}
-                item={i}
-                placed={!!placed[i.id]}
-                dragging={dragId === i.id}
-                tokenRef={(el) => (el ? tokens.current.set(i.id, el) : tokens.current.delete(i.id))}
-                onPointerDown={(e) => !placed[i.id] && startDrag(i.id, 'kit', e)}
-                onAdd={() => addFromKit(i.id)}
-              />
-            ))}
-          </KitGroup>
-          <KitGroup title="Hardware modules" note="Concepts we’re exploring">
-            {HARDWARE.map((i) => (
-              <KitRow
-                key={i.id}
-                item={i}
-                placed={!!placed[i.id]}
-                dragging={dragId === i.id}
-                tokenRef={(el) => (el ? tokens.current.set(i.id, el) : tokens.current.delete(i.id))}
-                onPointerDown={(e) => !placed[i.id] && startDrag(i.id, 'kit', e)}
-                onAdd={() => addFromKit(i.id)}
-              />
-            ))}
-          </KitGroup>
-
-          <div className="kit-summary">
+        <div className="kit-summary teaser-below">
             <div className="kit-summary-head">
               <h3>On your card</h3>
               {count > 0 && (
@@ -615,9 +660,7 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
                 Design and reserve yours <span aria-hidden="true">→</span>
               </a>
             </Magnetic>
-          </div>
-        </aside>
-      </div>
+        </div>
 
       <p className="sr-only" aria-live="polite">
         {announce}
@@ -629,18 +672,6 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
         </div>
       )}
     </section>
-  )
-}
-
-function KitGroup({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
-  return (
-    <div className="kit-group">
-      <h3>
-        {title}
-        {note && <span>{note}</span>}
-      </h3>
-      <ul>{children}</ul>
-    </div>
   )
 }
 
@@ -670,6 +701,7 @@ function KitRow({
   tokenRef,
   onPointerDown,
   onAdd,
+  style,
 }: {
   item: KitItem
   placed: boolean
@@ -677,10 +709,11 @@ function KitRow({
   tokenRef: (el: HTMLElement | null) => void
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void
   onAdd: () => void
+  style?: { left: string; top: string }
 }) {
   const name = item.kind === 'feature' ? FEATURE_BY_ID[item.id as FeatureId].label : item.label
   return (
-    <li className={`kit-row ${placed ? 'is-placed' : ''} ${dragging ? 'is-lifted' : ''}`} ref={tokenRef}>
+    <li className={`kit-row ${placed ? 'is-placed' : ''} ${dragging ? 'is-lifted' : ''}`} ref={tokenRef} style={style}>
       <span className="kit-handle" onPointerDown={onPointerDown} onContextMenu={(e) => e.preventDefault()} aria-hidden="true">
         <Token item={item} />
       </span>
