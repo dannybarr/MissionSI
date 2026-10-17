@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useStudio } from '@/studio/studio/store';
 import { nextFrames, renderStill } from '@/studio/studio/export';
 import { submitWaitlist } from '@/landing/server/waitlist';
+import { placedFeatures } from '@/studio/studio/features';
 import { TextBtn } from '../kit';
 
 export function ReserveDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
@@ -35,12 +36,12 @@ export function ReserveDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           name: name.trim() || undefined,
           use: use.trim() || undefined,
           source: 'studio',
-          design: variant,
+          design: { variant, features: placedFeatures(variant.design.marks).map(({ id, x, y }) => ({ id, x, y })) },
           png,
         },
       });
       if (result.ok) {
-        setNotice({ tone: 'ok', text: 'Saved with this design. This is interest only — we are not taking orders, deposits, or a ship date.' });
+        setNotice({ tone: 'ok', text: 'Saved with this design. It records interest only: no order, deposit or ship date.' });
       } else if (result.error === 'not_configured') {
         setNotice({
           tone: 'warn',
@@ -50,7 +51,7 @@ export function ReserveDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         setNotice({ tone: 'bad', text: 'That did not go through. Check the email address and try again.' });
       }
     } catch (err) {
-      setNotice({ tone: err instanceof Error ? 'bad' : 'bad', text: err instanceof Error ? err.message : 'That did not go through.' });
+      setNotice({ tone: 'bad', text: err instanceof Error ? err.message : 'That did not go through.' });
     } finally {
       setBusy(false);
     }
@@ -62,7 +63,7 @@ export function ReserveDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         <DialogHeader>
           <DialogTitle className="text-[15px] font-medium tracking-[-0.01em]">Reserve this design</DialogTitle>
           <DialogDescription className="text-[12px] leading-relaxed text-[#7d7a75]">
-            Sends the current variant and a PNG of the viewport with your email. Founding target is £249. We are not taking orders.
+            Sends this design, its hardware modules and a PNG of the viewport with your email. Founding target £249. This is not an order and nothing is charged.
           </DialogDescription>
         </DialogHeader>
         {compare.on ? (

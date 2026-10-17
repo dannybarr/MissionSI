@@ -39,10 +39,12 @@ export function MaterialPanel({ slot, setSlot, comp }: { slot: MaterialSlot; set
     updateDesign(`mat:${slot}:${k}`, (d) => ({ ...d, [slot]: { ...d[slot], [k]: v } }));
 
   const studioOnly = exact && (
-    <div className="flex items-start justify-between gap-2 rounded-[4px] border border-[hsl(var(--signal))]/25 bg-[hsl(var(--signal))]/[0.06] px-2 py-1.5" data-testid="status-studio-only">
-      <p className="text-[10.5px] leading-[1.45] text-[#c9c6c0]">True colour is unlit: these settings are saved but not visible until Studio shading.</p>
-      <TextBtn variant="outline" className="h-6 shrink-0 px-2 text-[10.5px]" onClick={() => setView({ shading: 'studio' })} testId="button-switch-studio">
-        View in Studio
+    <div className="flex flex-col items-start gap-2 rounded-[7px] border border-[hsl(var(--signal))]/30 bg-[hsl(var(--signal))]/[0.07] px-3 py-2.5" data-testid="status-studio-only">
+      <p className="text-[11px] leading-[1.5] text-[#d9d6cf]">
+        True colour shows the exact hex with no lighting, so metal, roughness and texture have nothing to change. Switch to Studio shading to edit them.
+      </p>
+      <TextBtn variant="outline" className="h-7 shrink-0 px-2.5 text-[11px]" onClick={() => setView({ shading: 'studio' })} testId="button-switch-studio">
+        Switch to Studio shading
       </TextBtn>
     </div>
   );
@@ -150,16 +152,16 @@ export function MaterialPanel({ slot, setSlot, comp }: { slot: MaterialSlot; set
         )}
         {exact && <Note>Base colour is shown exactly in True colour.</Note>}
         {studioOnly}
-        <ParamSlider label="Metallic intensity" value={m.metalness} min={0} max={1} onChange={(v) => set('metalness', v)} disabled={locked} testId="slider-metalness" />
-        <ParamSlider label="Surface roughness" value={m.roughness} min={0.02} max={1} onChange={(v) => set('roughness', v)} disabled={locked} testId="slider-roughness" />
-        <ParamSlider label="Reflectivity" value={m.reflectivity} min={0} max={2.5} onChange={(v) => set('reflectivity', v)} disabled={locked} testId="slider-reflectivity" />
-        <ParamSlider label="Clear coat" value={m.clearcoat} min={0} max={1} onChange={(v) => set('clearcoat', v)} disabled={locked} testId="slider-clearcoat" />
+        <ParamSlider label="Metallic intensity" value={m.metalness} min={0} max={1} onChange={(v) => set('metalness', v)} disabled={locked || exact} testId="slider-metalness" />
+        <ParamSlider label="Surface roughness" value={m.roughness} min={0.02} max={1} onChange={(v) => set('roughness', v)} disabled={locked || exact} testId="slider-roughness" />
+        <ParamSlider label="Reflectivity" value={m.reflectivity} min={0} max={2.5} onChange={(v) => set('reflectivity', v)} disabled={locked || exact} testId="slider-reflectivity" />
+        <ParamSlider label="Clear coat" value={m.clearcoat} min={0} max={1} onChange={(v) => set('clearcoat', v)} disabled={locked || exact} testId="slider-clearcoat" />
       </Section>
       <Section title="Procedural finish">
-        {studioOnly}
-        <ParamSlider label="Brushed finish" value={m.brush} min={0} max={1} step={0.05} onChange={(v) => set('brush', v)} disabled={locked} testId="slider-brush" />
-        <ParamSlider label="Bead-blast grain" value={m.grain} min={0} max={1} step={0.05} onChange={(v) => set('grain', v)} disabled={locked} testId="slider-grain" />
-        <ParamSlider label="Texture direction" value={m.direction} min={0} max={180} step={1} unit="deg" onChange={(v) => set('direction', v)} disabled={locked} testId="slider-direction" />
+        {studioOnly && <Note>Also Studio shading only.</Note>}
+        <ParamSlider label="Brushed finish" value={m.brush} min={0} max={1} step={0.05} onChange={(v) => set('brush', v)} disabled={locked || exact} testId="slider-brush" />
+        <ParamSlider label="Bead-blast grain" value={m.grain} min={0} max={1} step={0.05} onChange={(v) => set('grain', v)} disabled={locked || exact} testId="slider-grain" />
+        <ParamSlider label="Texture direction" value={m.direction} min={0} max={180} step={1} unit="deg" onChange={(v) => set('direction', v)} disabled={locked || exact} testId="slider-direction" />
         <Note>Brushing and grain are generated procedurally and drive both micro-roughness and bump, so highlights stretch along the grain.</Note>
       </Section>
     </>
