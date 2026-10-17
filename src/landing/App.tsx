@@ -1,3 +1,4 @@
+import '@/landing/index.css'
 import { useEffect, useState } from 'react'
 import { useLandingScroll } from '@/landing/lib/smooth'
 import { useReveals } from '@/landing/lib/reveal'

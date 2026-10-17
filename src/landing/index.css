@@ -8,7 +8,7 @@
   --ink: #141416;
   --ink-2: #2c2c31;
   --ink-soft: #5c5c62;
-  --ink-faint: #8a8a90;
+  --ink-faint: #6e6e74;
   --line: rgba(20, 20, 22, 0.1);
   --line-2: rgba(20, 20, 22, 0.18);
   --night: #0e0f10;
@@ -472,7 +472,8 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   .mission-site .mobile-nav a:last-child { background: var(--ink); color: #fff; margin-top: 4px; }
   .hero h1 { font-size: clamp(40px, 11.4vw, 56px); margin-bottom: 20px; }
   .hero-actions { margin-top: 26px; }
-  .hero-actions .btn { flex: 1 1 auto; }
+  .hero-actions > * { flex: 1 1 100%; }
+  .hero-actions .magnetic .btn { width: 100%; }
   .hero-specs { margin-left: 0; }
   .statement-lines { font-size: clamp(44px, 13vw, 64px); }
   .fact { min-height: 200px; }

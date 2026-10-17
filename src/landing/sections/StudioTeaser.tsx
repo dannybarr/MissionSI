@@ -525,7 +525,7 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
                       aria-label={`${feature ? feature.label : item.label} on the card. ${item.hint} Arrow keys move it, Delete removes it, or drag it off the card.`}
                       aria-describedby={`tip-${item.id}`}
                     >
-                      {item.id === 'earth' && <img src="/assets/nasa/earth.webp" alt="" draggable={false} />}
+                      {item.id === 'earth' && <img src="/assets/nasa/earth-240.webp" alt="" draggable={false} />}
                       {item.id === 'wordmark' && <span className="pw">Mission</span>}
                       {item.id === 'initials' && <span className="pi">DB</span>}
                       {feature && <span className="pf" dangerouslySetInnerHTML={{ __html: feature.svg }} />}
@@ -649,7 +649,7 @@ function Token({ item }: { item: KitItem }) {
     <span className={`token token-${item.kind}`}>
       <span className="token-icon">
         {item.id === 'earth' ? (
-          <img src="/assets/nasa/earth.webp" alt="" draggable={false} />
+          <img src="/assets/nasa/earth-240.webp" alt="" draggable={false} />
         ) : item.id === 'wordmark' ? (
           <span className="token-glyph">M</span>
         ) : item.id === 'initials' ? (

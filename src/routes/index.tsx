@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import LandingApp from "@/landing/App";
-import "@/landing/index.css";
 
 export const Route = createFileRoute("/")({
   head: () => ({

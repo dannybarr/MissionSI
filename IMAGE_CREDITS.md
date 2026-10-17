@@ -20,6 +20,7 @@ Backgrounds were removed so the objects can drop onto the tray with CSS contact 
 | File | Credit |
 | --- | --- |
 | `public/assets/nasa/earth.webp` | NASA, Apollo 17 crew, “The Blue Marble” (AS17-148-22727). https://images.nasa.gov/details/as17-148-22727 |
+| `public/assets/nasa/earth-240.webp` | The same NASA photograph, downscaled to 240 px for the landing page’s card drawings. |
 | `public/assets/nasa/*.webp` (Moon, Saturn, Sun, ISS limb) | Mission Studio’s artwork library only; the landing page does not use them. Credits for each are listed in `src/studio/studio/assets.ts`. |
 
 The card, its USB-C connector and the laptop are drawn in SVG on the page. They are not photographs of hardware. The older Studio renders of the previous card design were removed.

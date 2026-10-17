@@ -1,3 +1,4 @@
+import '@/studio/index.css';
 import { Toaster } from '@/studio/components/ui/toaster';
 import { TooltipProvider } from '@/studio/components/ui/tooltip';
 import Studio from '@/studio/pages/Studio';
