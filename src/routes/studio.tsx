@@ -1,6 +1,5 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import "@/studio/index.css";
 
 const StudioAppLazy = lazy(() => import("@/studio/App"));
 

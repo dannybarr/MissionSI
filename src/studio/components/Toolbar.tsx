@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Aperture, History, Download, FileJson, FolderOpen, MonitorPlay, Redo2, RotateCcw, Save, Box as BoxIcon, Image as ImageIcon, Undo2 } from 'lucide-react';
+import { Aperture, BookmarkCheck, History, Download, FileJson, FolderOpen, MonitorPlay, Redo2, RotateCcw, Save, Box as BoxIcon, Image as ImageIcon, Undo2 } from 'lucide-react';
 import { useStudio } from '@/studio/studio/store';
 import {
   DropdownMenu,
@@ -29,9 +29,10 @@ interface Props {
   onImport: () => void;
   onRestore: () => void;
   onBackups: () => void;
+  onReserve: () => void;
 }
 
-export function Toolbar({ onRender, onExportGLB, onExportJSON, onImport, onRestore, onBackups }: Props) {
+export function Toolbar({ onRender, onExportGLB, onExportJSON, onImport, onRestore, onBackups, onReserve }: Props) {
   const { project, updateProject, undo, redo, canUndo, canRedo, save, setPresentation } = useStudio();
   const [name, setName] = useState(project.name);
   useEffect(() => setName(project.name), [project.name]);
@@ -42,12 +43,12 @@ export function Toolbar({ onRender, onExportGLB, onExportJSON, onImport, onResto
   };
 
   return (
-    <header className="relative z-20 flex h-12 shrink-0 items-center gap-3 overflow-x-auto overflow-y-hidden border-b border-white/[0.06] bg-[#101113] px-3">
-      <div className="flex w-[232px] items-center gap-2 text-[#ebe8e1]">
+    <header className="relative z-20 flex h-14 shrink-0 items-center gap-3 overflow-x-auto overflow-y-hidden border-b border-white/[0.06] bg-[#101113] px-4">
+      <a href="/" className="flex w-[232px] items-center gap-2 text-[#ebe8e1]" aria-label="Mission home">
         <MissionMark />
         <span className="text-[12.5px] font-semibold tracking-[0.14em]">MISSION</span>
         <span className="text-[12.5px] font-light tracking-[0.14em] text-[#7d7a75]">STUDIO</span>
-      </div>
+      </a>
       <div className="h-5 w-px bg-white/[0.07]" />
       <input
         value={name}
@@ -108,8 +109,11 @@ export function Toolbar({ onRender, onExportGLB, onExportJSON, onImport, onResto
         <TextBtn testId="button-presentation" onClick={() => setPresentation(true)} title="Presentation mode">
           <MonitorPlay className="h-3.5 w-3.5" /> Present
         </TextBtn>
-        <TextBtn testId="button-render" variant="solid" onClick={onRender} className="ml-1">
+        <TextBtn testId="button-render" onClick={onRender}>
           <Aperture className="h-3.5 w-3.5" /> Render
+        </TextBtn>
+        <TextBtn testId="button-reserve" variant="solid" onClick={onReserve} className="ml-1.5 px-3.5" title="Save this design with your email">
+          <BookmarkCheck className="h-3.5 w-3.5" /> Reserve
         </TextBtn>
       </div>
     </header>

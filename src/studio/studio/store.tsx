@@ -10,7 +10,10 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { DEFAULT_VIEW, defaultDesign, defaultProject, initialVariants, MAX_MARKS, newMarkId, uid } from './presets';
+import type { TeaserPlacement } from '@/landing/lib/placement';
+import { editActive } from './edit-variant';
+import { earthMark, featureMark, initialsMark, wordmarkMark } from './features';
+import { DEFAULT_VIEW, defaultDesign, defaultProject, initialVariants, materialFromPreset, MAX_MARKS, newMarkId, trimFor, uid } from './presets';
 import { loadProject, loadView, saveProject, saveView, storageStatus, type LoadResult } from './storage';
 import type { BrandMark, CompId, Design, Project, Variant, ViewSettings } from './types';
 
@@ -131,6 +134,8 @@ interface StudioCtx {
   setCompare: (c: Partial<CompareState>) => void;
   galleryOpen: boolean;
   setGalleryOpen: (v: boolean) => void;
+  /** Add a new variant from the landing teaser. Seeded presets stay untouched. */
+  applyTeaser: (placement: TeaserPlacement) => void;
 }
 
 const Ctx = createContext<StudioCtx | null>(null);
@@ -172,7 +177,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   const updateDesign = useCallback(
     (key: string, fn: (d: Design) => Design) =>
-      commit(key, (p) => mapActive(p, (v) => ({ ...v, design: fn(v.design), updatedAt: Date.now() }))),
+      commit(key, (p) =>
+        editActive(
+          p,
+          (v) => {
+            const design = fn(v.design);
+            return design === v.design ? v : { ...v, design, updatedAt: Date.now() };
+          },
+          () => 'v-' + uid(),
+        ),
+      ),
     [commit],
   );
   const updateProject = useCallback((key: string, fn: (p: Project) => Project) => commit(key, fn), [commit]);
@@ -318,10 +332,41 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   const updateMarks = useCallback(
     (key: string, fn: (m: BrandMark[]) => BrandMark[]) =>
-      commit(key, (p) => mapActive(p, (v) => {
-        const marks = fn(v.design.marks);
-        return marks === v.design.marks ? v : { ...v, design: { ...v.design, marks }, updatedAt: Date.now() };
-      })),
+      commit(key, (p) =>
+        editActive(
+          p,
+          (v) => {
+            const marks = fn(v.design.marks);
+            return marks === v.design.marks ? v : { ...v, design: { ...v.design, marks }, updatedAt: Date.now() };
+          },
+          () => 'v-' + uid(),
+        ),
+      ),
+    [commit],
+  );
+
+  const applyTeaser = useCallback(
+    (placement: TeaserPlacement) =>
+      commit('teaser:' + uid(), (p) => {
+        const src = p.variants.find((v) => v.id === 'v-graphite') ?? p.variants[0];
+        const design = structuredClone(src.design);
+        design.body = materialFromPreset('matteGraphite');
+        design.trim = trimFor('blackTitanium');
+        const marks: BrandMark[] = [];
+        if (placement.wordmark) marks.push({ ...wordmarkMark(placement.wordmark.x, placement.wordmark.y), id: 'm-wordmark' });
+        if (placement.earth) marks.push({ ...earthMark(placement.earth.x, placement.earth.y), id: 'm-earth' });
+        if (placement.initials) marks.push({ ...initialsMark(placement.initials.x, placement.initials.y), id: 'm-initials' });
+        for (const f of placement.features ?? []) marks.push({ ...featureMark(f.id, f.x, f.y), id: newMarkId() });
+        design.marks = marks.slice(0, MAX_MARKS);
+        const v: Variant = {
+          id: 'v-' + uid(),
+          name: 'Landing design',
+          note: 'Placed on the homepage. The original presets are unchanged.',
+          design,
+          updatedAt: Date.now(),
+        };
+        return { ...p, variants: [...p.variants, v], activeVariantId: v.id };
+      }),
     [commit],
   );
 
@@ -439,8 +484,9 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       setCompare,
       galleryOpen,
       setGalleryOpen,
+      applyTeaser,
     }),
-    [project, variant, state.past.length, state.future.length, undo, redo, gesture, updateDesign, updateProject, setActiveVariant, duplicateVariant, saveAsVariant, renameVariant, deleteVariant, restoreDefaults, replaceProject, save, saveState, boot, selected, select, selectedMark, selectMark, addMarks, updateMark, removeMark, duplicateMark, moveMark, tab, view, setView, presentation, compare, setCompare, galleryOpen],
+    [project, variant, state.past.length, state.future.length, undo, redo, gesture, updateDesign, updateProject, setActiveVariant, duplicateVariant, saveAsVariant, renameVariant, deleteVariant, restoreDefaults, replaceProject, save, saveState, boot, selected, select, selectedMark, selectMark, addMarks, updateMark, removeMark, duplicateMark, moveMark, tab, view, setView, presentation, compare, setCompare, galleryOpen, applyTeaser],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

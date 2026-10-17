@@ -46,7 +46,9 @@ export type MaterialPreset =
   | 'blackTitanium'
   | 'gunmetal'
   | 'champagne'
-  | 'ceramicWhite';
+  | 'ceramicWhite'
+  | 'missionBlue'
+  | 'matteGrey';
 
 export interface MaterialParams {
   preset: MaterialPreset;

@@ -21,10 +21,11 @@ HONEST LIMITS
 - A standard USB stick cannot be locked to memory-only use. That needs custom hardware.
 
 PLANNED (NOT BUILT)
-- Custom card: deep blue, credit-card sized, about 4.4 mm, inward-cut edges, USB-C.
-  Bluetooth, GPS, push-to-talk mic, secure element (NXP SE050), 32-128 GB storage, NFC, haptics.
-- Dock: matte grey bead-blasted metal bed, X-shaped clamp that opens sideways,
-  split semicircle moon that lights only when the clamp is shut and the card is seated.
+- Custom card: graphite, credit-card sized, about 4.4 mm, inward-cut edges, with a built-in
+  USB-C connector so it plugs straight into a laptop. Earth mark, Mission wordmark, your initials.
+  A small status light shows when an agent has access.
+- Optional modules being explored: Bluetooth, GPS, push-to-talk mic, secure element (NXP SE050),
+  NFC, haptics. 32-128 GB storage.
 - Signals (opt-in): location, speech transcribed locally, a chief-of-staff feed.
 - Phone app as Bluetooth bridge. Payments later: open banking first.
 
@@ -32,4 +33,4 @@ PRICE
 Founding target for the custom card: GBP 249. Not taking orders, deposits or reservations.
 
 IMAGERY
-Moon: NASA Scientific Visualization Studio (LRO). Earth: NASA Apollo 17, The Blue Marble (AS17-148-22727).
+Earth: NASA Apollo 17, The Blue Marble (AS17-148-22727).

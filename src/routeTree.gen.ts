@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MissionStudioRouteImport } from './routes/mission-studio'
 import { Route as StudioRouteImport } from './routes/studio'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionStudioRoute = MissionStudioRouteImport.update({
+  id: '/mission-studio',
+  path: '/mission-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioRoute = StudioRouteImport.update({
@@ -25,27 +31,31 @@ const StudioRoute = StudioRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/mission-studio': typeof MissionStudioRoute
   '/studio': typeof StudioRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/mission-studio': typeof MissionStudioRoute
   '/studio': typeof StudioRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/mission-studio': typeof MissionStudioRoute
   '/studio': typeof StudioRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/studio'
+  fullPaths: '/' | '/mission-studio' | '/studio'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/studio'
-  id: '__root__' | '/' | '/studio'
+  to: '/' | '/mission-studio' | '/studio'
+  id: '__root__' | '/' | '/mission-studio' | '/studio'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MissionStudioRoute: typeof MissionStudioRoute
   StudioRoute: typeof StudioRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mission-studio': {
+      id: '/mission-studio'
+      path: '/mission-studio'
+      fullPath: '/mission-studio'
+      preLoaderRoute: typeof MissionStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MissionStudioRoute: MissionStudioRoute,
   StudioRoute: StudioRoute,
 }
 export const routeTree = rootRouteImport

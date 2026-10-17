@@ -1,89 +1,110 @@
-import { useEffect, useState } from 'react';
-import { motion, useReducedMotion, useScroll } from 'framer-motion';
-import { Mark } from '@/landing/lib/motion';
-import { Hero } from '@/landing/sections/Hero';
-import { Fragmented } from '@/landing/sections/Fragmented';
-import { Carry } from '@/landing/sections/Carry';
-import { Agents } from '@/landing/sections/Agents';
-import { AccessDemo } from '@/landing/sections/AccessDemo';
-import { Signals } from '@/landing/sections/Signals';
-import { Custody } from '@/landing/sections/Custody';
-import { Dock } from '@/landing/sections/Dock';
-import { Status } from '@/landing/sections/Status';
-import { Onboard, Footer } from '@/landing/sections/Closing';
+import '@/landing/index.css'
+import { useEffect, useState } from 'react'
+import { useLandingScroll } from '@/landing/lib/smooth'
+import { useReveals } from '@/landing/lib/reveal'
+import { Opening } from '@/landing/sections/Opening'
+import { Statement } from '@/landing/sections/Statement'
+import { Flags } from '@/landing/sections/Flags'
+import { Forest } from '@/landing/sections/Forest'
+import { HowItWorks } from '@/landing/sections/HowItWorks'
+import { StudioTeaser } from '@/landing/sections/StudioTeaser'
+import { PlugSequence } from '@/landing/sections/PlugSequence'
+import { Faq } from '@/landing/sections/Faq'
+import { Close, Footer } from '@/landing/sections/Close'
 
 const LINKS = [
-  ['memory', 'Memory'],
-  ['carry', 'Carry'],
+  ['how', 'How it works'],
   ['agents', 'Agents'],
-  ['demo', 'Demo'],
-  ['custody', 'Custody'],
-  ['status', 'Status'],
-];
+  ['faq', 'Questions'],
+]
 
 function Nav() {
-  const [solid, setSolid] = useState(false);
-  const [paper, setPaper] = useState(false);
-  const [active, setActive] = useState('');
-  const { scrollYProgress } = useScroll();
+  const [solid, setSolid] = useState(false)
+  const [hidden, setHidden] = useState(false)
+  const [open, setOpen] = useState(false)
   useEffect(() => {
+    let last = window.scrollY
+    let travel = 0
     const on = () => {
-      setSolid(window.scrollY > 40);
-      const probe = document.elementFromPoint(window.innerWidth / 2, 40)?.closest('[data-theme]');
-      setPaper(probe?.getAttribute('data-theme') === 'paper');
-      let cur = '';
-      for (const [id] of LINKS) { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top < window.innerHeight * 0.4) cur = id; }
-      setActive(cur);
-    };
-    on();
-    window.addEventListener('scroll', on, { passive: true });
-    return () => window.removeEventListener('scroll', on);
-  }, []);
+      const y = window.scrollY
+      const dy = y - last
+      last = y
+      setSolid(y > 12)
+      // accumulate a little travel first so trackpad jitter doesn't flicker the bar
+      travel = Math.sign(dy) === Math.sign(travel) ? travel + dy : dy
+      if (y < 120) setHidden(false)
+      else if (travel > 36) setHidden(true)
+      else if (travel < -24) setHidden(false)
+    }
+    on()
+    window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
   return (
-    <>
-      <motion.div className="progress-rail" style={{ scaleX: scrollYProgress, width: '100%' }} />
-      <header className={`nav ${solid ? 'solid' : ''} ${paper ? 'on-paper' : ''}`}>
-        <a href="#top" className="brand" data-testid="link-home"><Mark />MISSION</a>
-        <nav className="nav-links" aria-label="Sections">
-          {LINKS.map(([id, label]) => <a key={id} href={`#${id}`} className={active === id ? 'active' : ''} data-testid={`link-nav-${id}`}>{label}</a>)}
-        </nav>
-        <a href="#demo" className="nav-cta" data-testid="link-nav-demo">Try the demo</a>
-      </header>
-    </>
-  );
+    <header className={`site-nav ${solid ? 'solid' : ''} ${hidden && !open ? 'is-hidden' : ''}`} onFocus={() => setHidden(false)}>
+      <a href="#top" className="wordmark">
+        Mission
+      </a>
+      <nav aria-label="Page">
+        {LINKS.map(([id, label]) => (
+          <a key={id} href={`#${id}`} onClick={() => setOpen(false)}>
+            {label}
+          </a>
+        ))}
+      </nav>
+      <a className="nav-cta" href="/studio">
+        Design and reserve yours
+      </a>
+      <button type="button" className="nav-menu" aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen((v) => !v)}>
+        Menu
+      </button>
+      {open && (
+        <div id="mobile-nav" className="mobile-nav">
+          {LINKS.map(([id, label]) => (
+            <a key={id} href={`#${id}`} onClick={() => setOpen(false)}>
+              {label}
+            </a>
+          ))}
+          <a href="/studio" onClick={() => setOpen(false)}>
+            Design and reserve yours
+          </a>
+        </div>
+      )}
+    </header>
+  )
 }
 
-function Home() {
-  const rm = useReducedMotion();
-  const [forced, setForced] = useState(false);
-  useEffect(() => { setForced(new URLSearchParams(window.location.search).has('reduced')); }, []);
-  const reduced = !!rm || forced;
+export default function LandingApp() {
+  const [reduced, setReduced] = useState(false)
   useEffect(() => {
-    document.documentElement.classList.toggle('reduced', reduced);
-    document.documentElement.style.scrollBehavior = reduced ? 'auto' : 'smooth';
-  }, [reduced]);
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const q = new URLSearchParams(window.location.search).has('reduced')
+    const apply = () => setReduced(mq.matches || q)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+  useLandingScroll(reduced)
+  useReveals(reduced)
+
   return (
-    <div className={reduced ? 'reduced' : ''}>
+    <div className={`mission-site ${reduced ? 'reduced' : ''}`}>
+      <a className="skip" href="#top">
+        Skip to content
+      </a>
       <Nav />
       <main>
-        <Hero reduced={reduced} />
-        <Fragmented reduced={reduced} />
-        <Carry reduced={reduced} />
-        <Agents />
-        <AccessDemo />
-        <Signals />
-        <Custody reduced={reduced} />
-        <Dock />
-        <Status />
-        <Onboard />
+        <Opening reduced={reduced} />
+        <Statement reduced={reduced} />
+        <Flags reduced={reduced} />
+        <Forest reduced={reduced} />
+        <HowItWorks reduced={reduced} />
+        <StudioTeaser reduced={reduced} />
+        <PlugSequence reduced={reduced} />
+        <Faq reduced={reduced} />
+        <Close />
       </main>
       <Footer />
     </div>
-  );
+  )
 }
-
-function App() {
-  return <Home />;
-}
-
-export default App;
