@@ -1,43 +1,41 @@
 import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { EASE, gsap, ScrollTrigger } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
 
-gsap.registerPlugin(ScrollTrigger)
-
 const ITEMS = [
-  { id: 'key', src: '/media/tray/key.webp', alt: 'A black and gold car key fob', style: 'item-key' },
-  { id: 'airpods', src: '/media/tray/airpods.webp', alt: 'A white wireless earbud case', style: 'item-airpods' },
-  { id: 'wallet', src: '/media/tray/wallet.webp', alt: 'A brown leather card holder', style: 'item-wallet' },
-]
+  { id: 'card', rest: -6, from: -16, lift: 1 },
+  { id: 'key', src: '/media/tray/key.webp', alt: 'A black and gold car key fob', rest: -8, from: 14, lift: 0.85 },
+  { id: 'airpods', src: '/media/tray/airpods.webp', alt: 'A white wireless earbud case', rest: 6, from: -18, lift: 0.9 },
+  { id: 'wallet', src: '/media/tray/wallet.webp', alt: 'A brown leather card holder', rest: 4, from: 12, lift: 0.8 },
+] as const
 
 export function Tray({ reduced }: { reduced: boolean }) {
   const root = useRef<HTMLElement>(null)
   useEffect(() => {
     const el = root.current
     if (!el || reduced) return
-    const card = el.querySelector('.tray-card')
-    const items = el.querySelectorAll('.tray-item')
+    const objs = gsap.utils.toArray<HTMLElement>('.tray-obj', el)
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: el,
-          start: 'top top',
-          end: '+=140%',
-          pin: true,
-          scrub: 0.5,
-          anticipatePin: 1,
-        },
+      const tl = gsap.timeline({ paused: true })
+      objs.forEach((obj, i) => {
+        const body = obj.querySelector<HTMLElement>('.tray-body')!
+        const shadow = obj.querySelector<HTMLElement>('.tray-shadow')!
+        const it = ITEMS[i]
+        const h = el.querySelector<HTMLElement>('.tray-stage')!.clientHeight
+        const at = i === 0 ? 0 : 0.42 + (i - 1) * 0.2
+        const drop = 0.62 * it.lift
+        gsap.set(body, { y: -h * 0.75 * it.lift, rotation: it.from, opacity: 0, transformOrigin: '50% 100%' })
+        gsap.set(shadow, { scale: 2.1, opacity: 0 })
+        tl.to(body, { opacity: 1, duration: 0.12, ease: 'none' }, at)
+          .to(body, { y: 0, rotation: it.rest + (it.from > 0 ? 2 : -2), duration: drop, ease: EASE.fall }, at)
+          .to(shadow, { scale: 1, opacity: 1, duration: drop, ease: 'power2.in' }, at)
+          // contact: a short squash, then the object settles into the dish
+          .to(body, { scaleY: 0.93, scaleX: 1.035, duration: 0.07, ease: 'power2.out' }, at + drop)
+          .to(body, { scaleY: 1, scaleX: 1, rotation: it.rest, duration: 0.9, ease: 'elastic.out(1, 0.42)' }, at + drop + 0.07)
+          .to(shadow, { scaleX: 1.06, duration: 0.07, ease: 'power2.out', yoyo: true, repeat: 1 }, at + drop)
       })
-      tl.fromTo(card, { y: -220, rotation: -8, opacity: 0 }, { y: 0, rotation: -6, opacity: 1, duration: 0.4, ease: 'power2.out' })
-      items.forEach((item, i) => {
-        tl.fromTo(
-          item,
-          { y: -160 - i * 20, rotation: i % 2 ? 12 : -10, opacity: 0 },
-          { y: 0, rotation: i === 0 ? -8 : i === 1 ? 6 : 4, opacity: 1, duration: 0.32, ease: 'back.out(1.4)' },
-          0.28 + i * 0.16,
-        )
-      })
+      tl.from('.tray-dish', { y: 24, opacity: 0, duration: 0.9, ease: EASE.out }, 0)
+      ScrollTrigger.create({ trigger: '.tray-stage', start: 'top 72%', once: true, onEnter: () => tl.play() })
     }, el)
     return () => ctx.revert()
   }, [reduced])
@@ -46,17 +44,23 @@ export function Tray({ reduced }: { reduced: boolean }) {
     <section className="tray" id="carry" ref={root}>
       <div className="tray-pin">
         <div className="tray-copy">
-          <p className="eyebrow">Everyday carry</p>
-          <h2>It lives with the things you already take.</h2>
-          <p>A card. A key. The rest of a pocket. Pull it when you want an agent to know you. Put it back when you don’t.</p>
+          <p className="eyebrow" data-reveal>
+            <i /> Everyday carry
+          </p>
+          <h2 data-split>It lives with the things you already take.</h2>
+          <p data-reveal>A card. A key. The rest of a pocket. Plug it in when you want an agent to know you. Put it back when you don’t.</p>
         </div>
-        <div className="tray-stage" style={{ ['--tray' as string]: '#c9c3dc' }}>
-          <div className="tray-dish" />
-          <div className="tray-card">
-            <CardFace />
+        <div className="tray-stage">
+          <div className="tray-dish" aria-hidden="true">
+            <span className="tray-lip" />
           </div>
           {ITEMS.map((item) => (
-            <img key={item.id} className={`tray-item ${item.style}`} src={item.src} alt={item.alt} width={640} height={640} />
+            <div key={item.id} className={`tray-obj obj-${item.id}`}>
+              <span className="tray-shadow" aria-hidden="true" />
+              <div className="tray-body" style={{ ['--rest' as string]: `${item.rest}deg` }}>
+                {item.id === 'card' ? <CardFace /> : <img src={item.src} alt={item.alt} width={640} height={640} loading="lazy" decoding="async" />}
+              </div>
+            </div>
           ))}
         </div>
       </div>

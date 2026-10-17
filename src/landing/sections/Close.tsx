@@ -44,8 +44,11 @@ export function Close() {
   return (
     <section className="close" id="reserve">
       <div className="close-copy">
-        <h2>Carry your own memory.</h2>
-        <p>
+        <p className="eyebrow" data-reveal>
+          <i /> Founding list
+        </p>
+        <h2 data-split>Carry your own memory.</h2>
+        <p data-reveal>
           Founding target £249 for the custom card. We are not taking orders, deposits or reservations, and there is no ship date. Leave an email if you want to hear when that changes.
         </p>
         <Magnetic>
@@ -54,7 +57,7 @@ export function Close() {
           </a>
         </Magnetic>
       </div>
-      <form className="waitlist" onSubmit={onSubmit} noValidate={false}>
+      <form className="waitlist" onSubmit={onSubmit} noValidate={false} data-reveal>
         <h3>Waitlist</h3>
         <label>
           Name <span>(optional)</span>

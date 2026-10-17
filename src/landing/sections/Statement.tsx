@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
+import { EASE, gsap } from '@/landing/lib/motion'
 
 const LINES = ['Your memory.', 'Any agent.', 'Nobody else.']
 
@@ -25,24 +22,27 @@ export function Statement({ reduced }: { reduced: boolean }) {
     const row = track.current
     if (!section || !row || reduced) return
     const words = section.querySelectorAll<HTMLElement>('[data-word]')
+    const facts = row.querySelectorAll<HTMLElement>('.fact')
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           start: 'top top',
-          end: '+=240%',
+          end: '+=260%',
           pin: true,
-          scrub: 0.65,
+          scrub: 0.8,
           anticipatePin: 1,
+          invalidateOnRefresh: true,
         },
       })
       words.forEach((word, i) => {
-        tl.fromTo(word, { opacity: 0.2 }, { opacity: 1, duration: 0.6, ease: 'none' }, i * 0.28)
+        tl.fromTo(word, { opacity: 0.14, yPercent: 14 }, { opacity: 1, yPercent: 0, duration: 0.7, ease: EASE.inOut }, i * 0.26)
       })
-      tl.to({}, { duration: 0.25 })
+      tl.from(facts, { yPercent: 18, rotation: 2, opacity: 0, duration: 0.5, stagger: 0.07, ease: EASE.out }, '-=0.4')
+      tl.to({}, { duration: 0.15 })
       tl.to(row, {
-        x: () => -(row.scrollWidth - section.clientWidth + 48),
-        duration: 1.6,
+        x: () => -Math.max(0, row.scrollWidth - section.clientWidth + 48),
+        duration: 1.8,
         ease: 'none',
       })
     }, section)
@@ -52,7 +52,9 @@ export function Statement({ reduced }: { reduced: boolean }) {
   return (
     <section className="statement" id="memory" ref={root}>
       <div className="statement-pin">
-        <p className="eyebrow">The point</p>
+        <p className="eyebrow">
+          <i /> The point
+        </p>
         <h2 className="statement-lines">
           {LINES.map((line) => (
             <span key={line} className="statement-line">
@@ -65,8 +67,11 @@ export function Statement({ reduced }: { reduced: boolean }) {
           ))}
         </h2>
         <div className="h-scroll" ref={track}>
-          {FACTS.map((f) => (
+          {FACTS.map((f, i) => (
             <article key={f.k} className="fact">
+              <span className="fact-n">
+                {String(i + 1).padStart(2, '0')} / {String(FACTS.length).padStart(2, '0')}
+              </span>
               <h3>{f.k}</h3>
               <p>{f.d}</p>
             </article>

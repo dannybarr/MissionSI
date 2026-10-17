@@ -62,9 +62,8 @@ export function mountForest({ canvas, src, reduced }: ForestOptions): () => void
   }
 
   function layout() {
-    const rect = canvas.getBoundingClientRect()
-    const cssW = Math.max(2, Math.round(rect.width))
-    const cssH = Math.max(2, Math.round(rect.height))
+    const cssW = Math.max(2, canvas.clientWidth)
+    const cssH = Math.max(2, canvas.clientHeight)
     const cap = window.matchMedia('(max-width: 760px)').matches ? 640 : 960
     const scale = Math.min(1, cap / cssW)
     const w = Math.max(2, Math.round(cssW * scale))

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLandingScroll } from '@/landing/lib/smooth'
+import { useReveals } from '@/landing/lib/reveal'
 import { Hero } from '@/landing/sections/Hero'
 import { Statement } from '@/landing/sections/Statement'
 import { Flags } from '@/landing/sections/Flags'
@@ -19,15 +20,28 @@ const LINKS = [
 
 function Nav() {
   const [solid, setSolid] = useState(false)
+  const [hidden, setHidden] = useState(false)
   const [open, setOpen] = useState(false)
   useEffect(() => {
-    const on = () => setSolid(window.scrollY > 12)
+    let last = window.scrollY
+    let travel = 0
+    const on = () => {
+      const y = window.scrollY
+      const dy = y - last
+      last = y
+      setSolid(y > 12)
+      // accumulate a little travel first so trackpad jitter doesn't flicker the bar
+      travel = Math.sign(dy) === Math.sign(travel) ? travel + dy : dy
+      if (y < 120) setHidden(false)
+      else if (travel > 36) setHidden(true)
+      else if (travel < -24) setHidden(false)
+    }
     on()
     window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
   }, [])
   return (
-    <header className={`site-nav ${solid ? 'solid' : ''}`}>
+    <header className={`site-nav ${solid ? 'solid' : ''} ${hidden && !open ? 'is-hidden' : ''}`} onFocus={() => setHidden(false)}>
       <a href="#top" className="wordmark">
         Mission
       </a>
@@ -71,6 +85,7 @@ export default function LandingApp() {
     return () => mq.removeEventListener('change', apply)
   }, [])
   useLandingScroll(reduced)
+  useReveals(reduced)
 
   return (
     <div className={`mission-site ${reduced ? 'reduced' : ''}`}>
@@ -87,7 +102,7 @@ export default function LandingApp() {
         <StudioTeaser reduced={reduced} />
         <PlugSequence reduced={reduced} />
         <Tray reduced={reduced} />
-        <Faq />
+        <Faq reduced={reduced} />
         <Close />
       </main>
       <Footer />

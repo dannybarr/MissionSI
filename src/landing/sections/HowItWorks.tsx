@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { EASE, gsap, ScrollTrigger } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
-
-gsap.registerPlugin(ScrollTrigger)
 
 type AgentId = 'claude' | 'chatgpt' | 'local'
 type ScopeId = 'prefs' | 'work' | 'people' | 'health'
@@ -41,6 +38,8 @@ const clock = (n: number) => {
 export function HowItWorks({ reduced }: { reduced: boolean }) {
   const root = useRef<HTMLElement>(null)
   const [step, setStep] = useState(0)
+  const [pinned, setPinned] = useState(false)
+  const activePanel = pinned ? [0, 1, 2, 0][step] : -1
   const [plugged, setPlugged] = useState(false)
   const [agent, setAgent] = useState<AgentId>('claude')
   const [grants, setGrants] = useState<Record<AgentId, ScopeId[]>>({ claude: ['prefs', 'work'], chatgpt: [], local: ['prefs', 'work', 'people'] })
@@ -52,17 +51,30 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
   useEffect(() => {
     const el = root.current
     if (!el || reduced) return
-    const ctx = gsap.context(() => {
+    const mm = gsap.matchMedia(el)
+    mm.add('(min-width: 1101px) and (min-height: 700px)', () => {
+      setPinned(true)
+      gsap.set('.how-rail i', { scaleY: 0 })
       ScrollTrigger.create({
         trigger: el,
         start: 'top top',
-        end: '+=160%',
+        end: '+=180%',
         pin: true,
         anticipatePin: 1,
-        onUpdate: (self) => setStep(Math.min(3, Math.floor(self.progress * 4))),
+        onUpdate: (self) => {
+          gsap.set('.how-rail i', { scaleY: self.progress })
+          setStep(Math.min(3, Math.floor(self.progress * 4)))
+        },
       })
-    }, el)
-    return () => ctx.revert()
+      gsap.from('.panel', { y: 40, opacity: 0, duration: 1.1, stagger: 0.09, ease: EASE.out, clearProps: 'transform,opacity', scrollTrigger: { trigger: el, start: 'top 70%', once: true } })
+      return () => setPinned(false)
+    })
+    mm.add('(max-width: 1100px), (max-height: 699px)', () => {
+      gsap.utils.toArray<HTMLElement>('.panel', el).forEach((p) => {
+        gsap.from(p, { y: 32, opacity: 0, duration: 0.9, ease: EASE.out, clearProps: 'transform,opacity', scrollTrigger: { trigger: p, start: 'top 88%', once: true } })
+      })
+    })
+    return () => mm.revert()
   }, [reduced])
 
   const push = (k: Log['k'], m: string) => setLog((l) => [{ t: clock(tick.current++), k, m }, ...l].slice(0, 40))
@@ -106,17 +118,23 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
   }
 
   return (
-    <section className="how" id="how" ref={root}>
+    <section className={`how ${pinned ? 'is-pinned' : ''}`} id="how" ref={root}>
       <div className="how-pin">
         <div className="how-intro">
-          <p className="eyebrow">How it works</p>
-          <h2>Plug in. Grant. Ask. Pull it out.</h2>
+          <p className="eyebrow" data-reveal>
+            <i /> How it works
+          </p>
+          <h2 data-split>Plug in. Grant. Ask. Pull it out.</h2>
           <p className="demo-note" data-testid="text-demo-label">
             Demonstration · simulated in your browser · not hardware
           </p>
-          <ol className="how-steps">
+          <div className="how-track">
+            <span className="how-rail" aria-hidden="true">
+              <i />
+            </span>
+            <ol className="how-steps">
             {STEPS.map((s, i) => (
-              <li key={s.n} className={i === step ? 'on' : ''} aria-current={i === step ? 'step' : undefined}>
+              <li key={s.n} className={i === step ? 'on' : i < step ? 'done' : ''} aria-current={pinned && i === step ? 'step' : undefined}>
                 <span>{s.n}</span>
                 <div>
                   <h3>{s.h}</h3>
@@ -124,11 +142,12 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
                 </div>
               </li>
             ))}
-          </ol>
+            </ol>
+          </div>
         </div>
 
         <div className="console" aria-label="Simulated access demo">
-          <div className="panel">
+          <div className={`panel ${activePanel === 0 ? 'is-active' : ''}`}>
             <h3>
               <span>1 · Device</span>
               <span>{plugged ? 'connected' : 'idle'}</span>
@@ -140,7 +159,7 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
                 <CardFace plug status={plugged ? 1 : 0} marks alt="" />
               </div>
             </div>
-            <button type="button" className="btn btn-ink plug" onClick={togglePlug} aria-pressed={plugged} data-testid="button-toggle-plug">
+            <button type="button" className="btn btn-ink plug-toggle" onClick={togglePlug} aria-pressed={plugged} data-testid="button-toggle-plug">
               {plugged ? 'Unplug the card' : 'Plug in the card'}
             </button>
             <ul className="helper">
@@ -161,7 +180,7 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
             </ul>
           </div>
 
-          <div className="panel">
+          <div className={`panel ${activePanel === 1 ? 'is-active' : ''}`}>
             <h3>
               <span>2 · Grants for {agentName}</span>
             </h3>
@@ -202,7 +221,7 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
             <p className="retain">Unplugging stops future access. It does not pull back anything already shared. A remote provider may keep that under its own policy.</p>
           </div>
 
-          <div className="panel">
+          <div className={`panel ${activePanel === 2 ? 'is-active' : ''}`}>
             <h3>
               <span>3 · Session</span>
               <span>{agentName}</span>

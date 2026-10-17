@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { gsap } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
 import { AGENT_MARKS } from './marks'
-
-gsap.registerPlugin(ScrollTrigger)
 
 /** Scene coordinates: a 1600 × 1000 box. Laptop deck on the left, port on its right edge at y = 500. */
 const PORT_X = 762
@@ -173,7 +170,7 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
                   key={a.id}
                   className="agent-chip"
                   data-granted={a.granted}
-                  style={{ ...pct(a.at.x, a.at.y), ['--brand' as string]: a.mark.cloth, ...(reduced ? { '--on': a.granted ? 1 : 0, '--held': a.granted ? 0 : 1 } : {}) } as React.CSSProperties}
+                  style={{ ...pct(a.at.x, a.at.y), ['--brand' as string]: a.mark.cloth, ['--brand-ink' as string]: a.mark.ink, ...(reduced ? { '--on': a.granted ? 1 : 0, '--held': a.granted ? 0 : 1 } : {}) } as React.CSSProperties}
                 >
                   <span className="agent-dot" dangerouslySetInnerHTML={{ __html: a.mark.svg }} />
                   <span className="agent-name">{a.mark.name}</span>

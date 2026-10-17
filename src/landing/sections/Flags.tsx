@@ -1,29 +1,33 @@
 import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { EASE, gsap } from '@/landing/lib/motion'
 import { AGENT_MARKS, FLAG_LAYOUT } from './marks'
-
-gsap.registerPlugin(ScrollTrigger)
 
 export function Flags({ reduced }: { reduced: boolean }) {
   const root = useRef<HTMLElement>(null)
   useEffect(() => {
     const el = root.current
     if (!el || reduced) return
-    const ribbons = el.querySelectorAll<HTMLElement>('.ribbon')
+    const ribbons = gsap.utils.toArray<HTMLElement>('.ribbon-unfurl', el)
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        ribbons,
-        { x: 80, opacity: 0 },
-        {
-          x: 0,
-          opacity: 1,
-          duration: 0.9,
-          stagger: 0.04,
-          ease: 'power3.out',
-          scrollTrigger: { trigger: el, start: 'top 75%', once: true },
-        },
-      )
+      gsap.from(ribbons, {
+        xPercent: 70,
+        scaleX: 0.6,
+        transformOrigin: '100% 50%',
+        opacity: 0,
+        duration: 1.5,
+        ease: EASE.arrive,
+        stagger: { each: 0.05, from: 'random' },
+        scrollTrigger: { trigger: el, start: 'top 72%', once: true },
+      })
+      // three depth planes: far ribbons drift less than near ones
+      ribbons.forEach((r, i) => {
+        const depth = [0.4, 1, 0.7][i % 3]
+        gsap.fromTo(
+          r,
+          { y: 70 * depth },
+          { y: -70 * depth, ease: 'none', scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: 0.9 } },
+        )
+      })
     }, el)
     return () => ctx.revert()
   }, [reduced])
@@ -48,10 +52,12 @@ export function Flags({ reduced }: { reduced: boolean }) {
                   animationDelay: `${slot.delay * -8}s`,
                 }}
               >
-                <span className="ribbon-cloth" />
-                <span className="ribbon-logo">
-                  <span className="ribbon-svg" dangerouslySetInnerHTML={{ __html: mark.svg }} />
-                  <span className="ribbon-name">{mark.name}</span>
+                <span className="ribbon-unfurl">
+                  <span className="ribbon-cloth" />
+                  <span className="ribbon-logo">
+                    <span className="ribbon-svg" dangerouslySetInnerHTML={{ __html: mark.svg }} />
+                    <span className="ribbon-name">{mark.name}</span>
+                  </span>
                 </span>
               </li>
             )
@@ -59,11 +65,16 @@ export function Flags({ reduced }: { reduced: boolean }) {
         </ul>
       </div>
       <div className="flag-copy">
-        <h2 id="flags-title">One memory that works with every agent.</h2>
-        <p>
+        <p className="eyebrow" data-reveal>
+          <i /> Agent-agnostic
+        </p>
+        <h2 id="flags-title" data-split>
+          One memory that works with every agent.
+        </h2>
+        <p data-reveal>
           Mission speaks MCP, an open way to hand an agent context. You choose who connects and what they may read. Support depends on the agent: Claude Desktop is the strongest path today. We will not promise a connector a provider has not shipped.
         </p>
-        <p className="legal">
+        <p className="legal" data-reveal>
           Claude, ChatGPT, Grok, Gemini, Meta, Mistral, Perplexity, Manus, DeepSeek, Copilot, Cursor, Ollama, Hugging Face and Apple are trademarks of their owners. Marks show who can connect, not an endorsement. Logos via Simple Icons (CC0) where the set includes them; Manus, Grok and Copilot are set in type or a simplified mark because Simple Icons does not ship those files.
         </p>
       </div>

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { EASE, gsap } from '@/landing/lib/motion'
 import GlassFolder, { type FolderFile } from '@/components/ui/glass-folder-cards'
 
 const ANSWERS: Record<string, { q: string; a: string }> = {
@@ -48,9 +49,26 @@ const MORE_FILES: FolderFile[] = [
 
 const KEYS = ['agents', 'import', 'session', 'log', 'cloud', 'hardware', 'orders'] as const
 
-export function Faq() {
+export function Faq({ reduced }: { reduced: boolean }) {
   const [open, setOpen] = useState<string>('cloud')
   const answer = ANSWERS[open]
+  const card = useRef<HTMLElement>(null)
+  const first = useRef(true)
+
+  useLayoutEffect(() => {
+    if (first.current) {
+      first.current = false
+      return
+    }
+    const el = card.current
+    if (!el || reduced) return
+    const tl = gsap.timeline()
+    tl.fromTo(el, { '--lift': 0.6 }, { '--lift': 0, duration: 0.8, ease: EASE.out })
+      .fromTo(el.children, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, stagger: 0.06, ease: EASE.out, clearProps: 'transform,opacity' }, 0)
+    return () => {
+      tl.kill()
+    }
+  }, [open, reduced])
 
   const pick = (folder: 'agent' | 'privacy' | 'more', index: number) => {
     const map = {
@@ -64,9 +82,11 @@ export function Faq() {
   return (
     <section className="faq" id="faq">
       <div className="faq-head">
-        <p className="eyebrow">Questions</p>
-        <h2>Open a folder.</h2>
-        <p>Short answers, the same ones we would give in person. Hover a folder, click to open it, then choose a file.</p>
+        <p className="eyebrow" data-reveal>
+          <i /> Questions
+        </p>
+        <h2 data-split>Open a folder.</h2>
+        <p data-reveal>Short answers, the same ones we would give in person. Hover a folder, click to open it, then choose a file.</p>
       </div>
       <div className="faq-row">
         <GlassFolder
@@ -98,7 +118,10 @@ export function Faq() {
         />
       </div>
       {answer && (
-        <article className="faq-answer" aria-live="polite">
+        <article className="faq-answer" aria-live="polite" ref={card}>
+          <span className="faq-tab" aria-hidden="true">
+            {String(KEYS.indexOf(open as (typeof KEYS)[number]) + 1).padStart(2, '0')}
+          </span>
           <h3>{answer.q}</h3>
           <p>{answer.a}</p>
         </article>
