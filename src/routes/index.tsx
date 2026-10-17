@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#08122e" },
+      { name: "theme-color", content: "#f3f3f4" },
     ],
   }),
   component: Index,
