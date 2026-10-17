@@ -7,6 +7,7 @@ import { pose, signals } from './pose'
 import { CARD } from './geometry'
 import { drawHeroPrint, printPlaneSize } from './print'
 import { ProductCard } from './ProductCard'
+import { KeyFob } from './KeyFob'
 
 const TRAY_Y = -19
 const hero = new THREE.Vector3()
@@ -199,24 +200,10 @@ function Carry({ blob }: { blob: THREE.Texture }) {
   })
   return (
     <group>
-      <group ref={key} position={[-8.2, 0.5, 0.4]} rotation={[0, -0.7, 0]}>
-        <RoundedBox args={[3.05, 0.78, 6.15]} radius={0.32} smoothness={4} castShadow receiveShadow>
-          <meshStandardMaterial color="#6a6d59" roughness={0.82} metalness={0.04} />
-        </RoundedBox>
-        <RoundedBox args={[2.35, 0.82, 1.2]} radius={0.16} position={[0, 0.03, -2.15]} castShadow>
-          <meshPhysicalMaterial color="#e6e8ec" metalness={1} roughness={0.16} />
-        </RoundedBox>
-        <mesh position={[0, 0.05, -3.25]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <torusGeometry args={[1.02, 0.15, 12, 28]} />
-          <meshPhysicalMaterial color="#d4b56a" metalness={1} roughness={0.28} />
-        </mesh>
-        {[-0.85, 0.15, 1.15].map((z) => (
-          <RoundedBox key={z} args={[1.7, 0.12, 0.85]} radius={0.08} position={[0, 0.42, z]} castShadow>
-            <meshPhysicalMaterial color="#c6a15a" metalness={0.9} roughness={0.32} />
-          </RoundedBox>
-        ))}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.42, 0.2]}>
-          <planeGeometry args={[3.4, 5.2]} />
+      <group ref={key} position={[-8.2, 0.55, 0.2]} rotation={[0, -0.55, 0]}>
+        <KeyFob />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0.2]}>
+          <planeGeometry args={[4.2, 7.4]} />
           <meshBasicMaterial map={blob} transparent depthWrite={false} opacity={0.85} />
         </mesh>
       </group>
