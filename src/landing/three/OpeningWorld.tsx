@@ -25,7 +25,7 @@ function StudioEnv() {
     const room = new RoomEnvironment()
     const tex = pmrem.fromScene(room, 0.04).texture
     scene.environment = tex
-    scene.environmentIntensity = 0.42
+    scene.environmentIntensity = 0.58
     return () => {
       scene.environment = null
       tex.dispose()
@@ -135,23 +135,23 @@ function Tray() {
   const wallMat = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
-        color: '#d4c9e8',
-        roughness: 0.18,
-        metalness: 0.02,
+        color: '#c5b0e4',
+        roughness: 0.12,
+        metalness: 0.04,
         clearcoat: 1,
-        clearcoatRoughness: 0.12,
-        envMapIntensity: 1.2,
-        sheen: 0.45,
-        sheenColor: new THREE.Color('#f6f3fb'),
-        sheenRoughness: 0.4,
+        clearcoatRoughness: 0.08,
+        envMapIntensity: 1.35,
+        sheen: 0.55,
+        sheenColor: new THREE.Color('#f4effb'),
+        sheenRoughness: 0.28,
       }),
     [],
   )
   const floorMat = useMemo(() => {
     const m = wallMat.clone()
-    m.color.set('#e4dcf3')
-    m.roughness = 0.1
-    m.clearcoatRoughness = 0.08
+    m.color.set('#d9cef2')
+    m.roughness = 0.08
+    m.clearcoatRoughness = 0.06
     return m
   }, [wallMat])
   useEffect(
@@ -165,6 +165,45 @@ function Tray() {
     <group>
       <mesh geometry={geos.walls} material={wallMat} castShadow receiveShadow />
       <mesh geometry={geos.floor} material={floorMat} receiveShadow />
+    </group>
+  )
+}
+
+function stitchTexture() {
+  const c = document.createElement('canvas')
+  c.width = 512
+  c.height = 360
+  const ctx = c.getContext('2d')!
+  ctx.clearRect(0, 0, 512, 360)
+  ctx.strokeStyle = '#e6d2b8'
+  ctx.lineWidth = 3
+  ctx.setLineDash([7, 9])
+  ctx.strokeRect(28, 24, 456, 312)
+  const tex = new THREE.CanvasTexture(c)
+  tex.colorSpace = THREE.SRGBColorSpace
+  return tex
+}
+
+/** A slim leather sleeve with contrast stitching and a card sitting in the slot. */
+function CardHolder({ leather }: { leather: THREE.Texture }) {
+  const stitch = useMemo(() => stitchTexture(), [])
+  useEffect(() => () => stitch.dispose(), [stitch])
+  return (
+    <group>
+      <RoundedBox args={[7.6, 0.48, 5.4]} radius={0.18} smoothness={3} castShadow receiveShadow>
+        <meshPhysicalMaterial color="#6a4330" roughness={0.58} metalness={0} bumpMap={leather} bumpScale={0.05} clearcoat={0.18} clearcoatRoughness={0.45} />
+      </RoundedBox>
+      <mesh position={[0, 0.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[7.2, 5.05]} />
+        <meshBasicMaterial map={stitch} transparent depthWrite={false} />
+      </mesh>
+      <RoundedBox args={[6.5, 0.06, 4.3]} radius={0.08} position={[0, 0.16, -0.55]} castShadow>
+        <meshPhysicalMaterial color="#1a1c20" roughness={0.4} metalness={0.3} />
+      </RoundedBox>
+      <mesh position={[0, 0.2, -2.15]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[5.8, 0.7]} />
+        <meshBasicMaterial color="#2a2c31" />
+      </mesh>
     </group>
   )
 }
@@ -203,7 +242,7 @@ function Carry({ blob }: { blob: THREE.Texture }) {
     <group>
       <group ref={key} position={[-8.2, 0.55, 0.2]} rotation={[0, -0.55, 0]}>
         <KeyFob />
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0.2]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.45, -0.5, 0.55]}>
           <planeGeometry args={[4.2, 7.4]} />
           <meshBasicMaterial map={blob} transparent depthWrite={false} opacity={0.85} />
         </mesh>
@@ -211,18 +250,16 @@ function Carry({ blob }: { blob: THREE.Texture }) {
 
       <group ref={pods} position={[6.6, 1.15, -4.6]} rotation={[0, 0.35, 0]}>
         <AirPods />
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.15, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.4, -1.15, 0.45]}>
           <planeGeometry args={[8.5, 7.2]} />
           <meshBasicMaterial map={blob} transparent depthWrite={false} opacity={0.65} />
         </mesh>
       </group>
 
-      <group ref={wallet} position={[3.2, 0.4, 6.4]} rotation={[0, 0.12, 0]}>
-        <RoundedBox args={[9.3, 0.62, 6.9]} radius={0.18} smoothness={3} castShadow receiveShadow>
-          <meshPhysicalMaterial color="#8a5638" roughness={0.62} metalness={0} bumpMap={leather} bumpScale={0.04} clearcoat={0.12} clearcoatRoughness={0.5} />
-        </RoundedBox>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.28, 0]}>
-          <planeGeometry args={[8.6, 6.2]} />
+      <group ref={wallet} position={[6.4, 0.38, 5.6]} rotation={[0, -0.18, 0]}>
+        <CardHolder leather={leather} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.35, -0.32, 0.4]}>
+          <planeGeometry args={[8.2, 6.4]} />
           <meshBasicMaterial map={blob} transparent depthWrite={false} opacity={0.8} />
         </mesh>
       </group>
