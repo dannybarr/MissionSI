@@ -84,7 +84,10 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
                   </ul>
                 </div>
               </div>
-              <div className="mbp-base" aria-hidden="true" />
+              <div className="mbp-deck" aria-hidden="true">
+                <div className="mbp-keys" />
+                <div className="mbp-track" />
+              </div>
             </div>
           </div>
 
@@ -100,12 +103,15 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
 
           <div className="conn-phone" aria-hidden="true">
             <div className="phone">
-              <div className="phone-bar"><b>9:41</b></div>
-              <div className="phone-pair">
-                <span />
-                <span />
-                <strong>Mission</strong>
-                <em>Bluetooth pairing</em>
+              <div className="phone-screen">
+                <div className="phone-island" />
+                <div className="phone-bar"><b>9:41</b></div>
+                <div className="phone-pair">
+                  <span />
+                  <span />
+                  <strong>Mission</strong>
+                  <em>Bluetooth pairing</em>
+                </div>
               </div>
             </div>
           </div>
