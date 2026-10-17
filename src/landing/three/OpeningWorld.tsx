@@ -8,6 +8,7 @@ import { CARD } from './geometry'
 import { drawHeroPrint, printPlaneSize } from './print'
 import { ProductCard } from './ProductCard'
 import { KeyFob } from './KeyFob'
+import { AirPods } from './AirPods'
 
 const TRAY_Y = -19
 const hero = new THREE.Vector3()
@@ -208,42 +209,11 @@ function Carry({ blob }: { blob: THREE.Texture }) {
         </mesh>
       </group>
 
-      <group ref={pods} position={[7.2, 1.05, -5.2]} rotation={[0, 0.4, 0]}>
-        <RoundedBox args={[4.55, 2.05, 5.85]} radius={0.72} smoothness={5} castShadow receiveShadow>
-          <meshPhysicalMaterial color="#f6f6f4" roughness={0.22} clearcoat={0.65} clearcoatRoughness={0.18} />
-        </RoundedBox>
-        <mesh position={[0, 0.15, 0]}>
-          <boxGeometry args={[4.3, 0.025, 5.5]} />
-          <meshStandardMaterial color="#e7e7e4" roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 1.04, 1.5]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[0.08, 16]} />
-          <meshStandardMaterial color="#1a1a1a" />
-        </mesh>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.1, 0]}>
-          <planeGeometry args={[4.2, 4.6]} />
-          <meshBasicMaterial map={blob} transparent depthWrite={false} opacity={0.7} />
-        </mesh>
-      </group>
-
-      <group position={[4.6, 0.36, -8.8]} rotation={[0, 0.9, 0]}>
-        <mesh rotation={[0.4, 0, 0.3]} castShadow>
-          <capsuleGeometry args={[0.28, 0.7, 6, 10]} />
-          <meshPhysicalMaterial color="#f4f4f2" roughness={0.25} clearcoat={0.4} />
-        </mesh>
-        <mesh position={[0.15, 0.15, 0.55]} castShadow>
-          <sphereGeometry args={[0.42, 16, 12]} />
-          <meshPhysicalMaterial color="#f7f7f5" roughness={0.2} clearcoat={0.5} />
-        </mesh>
-      </group>
-      <group position={[9.6, 0.36, -8.2]} rotation={[0, -0.35, 0]}>
-        <mesh rotation={[0.2, 0, -0.5]} castShadow>
-          <capsuleGeometry args={[0.28, 0.7, 6, 10]} />
-          <meshPhysicalMaterial color="#f4f4f2" roughness={0.25} clearcoat={0.4} />
-        </mesh>
-        <mesh position={[-0.1, 0.12, 0.5]} castShadow>
-          <sphereGeometry args={[0.42, 16, 12]} />
-          <meshPhysicalMaterial color="#f7f7f5" roughness={0.2} clearcoat={0.5} />
+      <group ref={pods} position={[6.6, 1.15, -4.6]} rotation={[0, 0.35, 0]}>
+        <AirPods />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.15, 0]}>
+          <planeGeometry args={[8.5, 7.2]} />
+          <meshBasicMaterial map={blob} transparent depthWrite={false} opacity={0.65} />
         </mesh>
       </group>
 
