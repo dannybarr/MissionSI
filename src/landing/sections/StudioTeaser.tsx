@@ -57,7 +57,7 @@ function scatterSpots(ids: string[]) {
     for (let n = 0; n < 48; n++) {
       x = 10 + Math.random() * 80
       y = 8 + Math.random() * 84
-      const onCard = Math.abs(x - 50) < 26 && Math.abs(y - 48) < 20
+      const onCard = Math.abs(x - 50) < 30 && Math.abs(y - 48) < 26
       const crowded = taken.some((p) => Math.hypot(p.x - x, p.y - y) < 16)
       if (!onCard && !crowded) break
     }

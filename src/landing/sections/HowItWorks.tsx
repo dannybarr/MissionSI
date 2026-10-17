@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { EASE, gsap, ScrollTrigger } from '@/landing/lib/motion'
-import { CardFace } from '@/landing/components/CardFace'
 
 type AgentId = 'claude' | 'chatgpt' | 'local'
 type ScopeId = 'prefs' | 'work' | 'people' | 'health'
@@ -22,10 +21,10 @@ const ASKS: { id: string; q: string; needs: ScopeId[]; a: string }[] = [
   { id: 'card', q: 'Draft a birthday note', needs: ['people', 'prefs'], a: 'A brief, warm note, ready for March.' },
 ]
 const STEPS = [
-  { n: '01', h: 'Plug in', p: 'The card connects over USB-C. A local helper unlocks the memory and starts the connector.' },
+  { n: '01', h: 'Connect', p: 'A USB-C cable runs from the laptop to the port on the card’s left edge. A local helper unlocks the memory.' },
   { n: '02', h: 'Grant per agent', p: 'Each agent gets only the scopes you allow. Health stays back unless you open it.' },
   { n: '03', h: 'Ask', p: 'The session is packed with just that grant. You can see what was shared and what was held.' },
-  { n: '04', h: 'Pull out', p: 'Future requests fail. Anything already sent to a remote provider stays under their policy.' },
+  { n: '04', h: 'Disconnect', p: 'Unplug the cable, or unpair the phone. Future requests fail. Anything already sent stays under that provider’s policy.' },
 ]
 
 type Msg = { k: 'user' | 'agent' | 'denied' | 'pack'; t: string }
@@ -124,7 +123,7 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
           <p className="eyebrow" data-reveal>
             <i /> How it works
           </p>
-          <h2 data-split>Plug in. Grant. Ask. Pull it out.</h2>
+          <h2 data-split>Connect. Grant. Ask. Disconnect.</h2>
           <p className="demo-note" data-testid="text-demo-label">
             Demonstration · simulated in your browser · not hardware
           </p>
@@ -147,116 +146,125 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
         </div>
 
         <div className="console" aria-label="Simulated access demo">
-          <div className={`panel ${activePanel === 0 ? 'is-active' : ''}`}>
-            <h3>
-              <span>1 · Device</span>
-              <span>{plugged ? 'connected' : 'idle'}</span>
-            </h3>
-            <div className="laptop" aria-hidden="true">
-              <span>your laptop</span>
-              <i className="port" />
-              <div className={`laptop-card ${plugged ? 'in' : ''}`}>
-                <CardFace plug status={plugged ? 1 : 0} marks alt="" />
+          <div className={`os ${activePanel === 0 ? 'is-active' : ''}`}>
+            <div className="os-bar">
+              <span className="os-lights" aria-hidden="true"><i /><i /><i /></span>
+              <span>Mission Helper</span>
+              <span className="os-state">{plugged ? 'Cable connected' : 'No cable'}</span>
+            </div>
+            <div className="os-body">
+              <div className="ios ios-inline" aria-hidden="true">
+                <div className="ios-status"><b>9:41</b><span>{plugged ? 'Paired' : 'Not paired'}</span></div>
+                <p>{plugged ? 'Mission is available to apps on this iPhone.' : 'Bluetooth is waiting for the card.'}</p>
               </div>
+              <button type="button" className="btn btn-ink plug-toggle" onClick={togglePlug} aria-pressed={plugged} data-testid="button-toggle-plug">
+                {plugged ? 'Disconnect the cable' : 'Connect the cable'}
+              </button>
+              <ul className="helper">
+                <li><span>Memory</span><span>{plugged ? 'unlocked' : 'locked'}</span></li>
+                <li><span>MCP connector</span><span>{plugged ? 'running' : 'stopped'}</span></li>
+                <li><span>Shared so far</span><span data-testid="text-shared-count">{shared} item{shared === 1 ? '' : 's'}</span></li>
+              </ul>
             </div>
-            <button type="button" className="btn btn-ink plug-toggle" onClick={togglePlug} aria-pressed={plugged} data-testid="button-toggle-plug">
-              {plugged ? 'Unplug the card' : 'Plug in the card'}
-            </button>
-            <ul className="helper">
-              <li>
-                <span>Memory</span>
-                <span>{plugged ? 'unlocked' : 'locked'}</span>
-              </li>
-              <li>
-                <span>MCP connector</span>
-                <span>{plugged ? 'running' : 'stopped'}</span>
-              </li>
-              <li>
-                <span>Shared so far</span>
-                <span data-testid="text-shared-count">
-                  {shared} item{shared === 1 ? '' : 's'}
-                </span>
-              </li>
-            </ul>
           </div>
 
-          <div className={`panel ${activePanel === 1 ? 'is-active' : ''}`}>
-            <h3>
-              <span>2 · Grants for {agentName}</span>
-            </h3>
-            <div className="scopes">
-              {SCOPES.map((s) => {
-                const on = grants[agent].includes(s.id)
-                return (
-                  <div key={s.id} className={on ? 'scope on' : 'scope'}>
-                    <span>
-                      {s.name}
-                      <small>{s.desc}</small>
-                    </span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={on}
-                      aria-label={`Allow ${s.name} for ${agentName}`}
-                      className="switch"
-                      onClick={() => toggleScope(s.id)}
-                      data-testid={`toggle-scope-${s.id}`}
-                    />
+          <div className={`os sheet ${activePanel === 1 ? 'is-active' : ''}`}>
+            <div className="os-bar">
+              <span className="os-lights" aria-hidden="true"><i /><i /><i /></span>
+              <span>Permissions — {agentName}</span>
+            </div>
+            <div className="os-body">
+              <p className="sheet-lead">Allow {agentName} to read these scopes for this session only.</p>
+              <div className="scopes">
+                {SCOPES.map((s) => {
+                  const on = grants[agent].includes(s.id)
+                  return (
+                    <div key={s.id} className={on ? 'scope on' : 'scope'}>
+                      <span>
+                        {s.name}
+                        <small>{s.desc}</small>
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={on}
+                        aria-label={`Allow ${s.name} for ${agentName}`}
+                        className="switch"
+                        onClick={() => toggleScope(s.id)}
+                        data-testid={`toggle-scope-${s.id}`}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+              <h3 className="log-head"><span>Audit log</span><span>local · today</span></h3>
+              <div className="log" data-testid="list-audit-log">
+                {log.map((l, i) => (
+                  <div key={`${l.t}-${i}`} className={`log-line ${l.k}`}>
+                    <span>{l.t}</span>
+                    <span>{l.m}</span>
                   </div>
-                )
-              })}
+                ))}
+              </div>
+              <p className="retain">Disconnecting stops future access. It does not pull back anything already shared. A remote provider may keep that under its own policy.</p>
             </div>
-            <h3 className="log-head">
-              <span>Audit log</span>
-              <span>local</span>
-            </h3>
-            <div className="log" data-testid="list-audit-log">
-              {log.map((l, i) => (
-                <div key={`${l.t}-${i}`} className={`log-line ${l.k}`}>
-                  <span>{l.t}</span>
-                  <span>{l.m}</span>
-                </div>
-              ))}
-            </div>
-            <p className="retain">Unplugging stops future access. It does not pull back anything already shared. A remote provider may keep that under its own policy.</p>
           </div>
 
-          <div className={`panel ${activePanel === 2 ? 'is-active' : ''}`}>
-            <h3>
-              <span>3 · Session</span>
+          <div className={`os claude ${activePanel === 2 ? 'is-active' : ''}`}>
+            <div className="os-bar">
+              <span className="os-lights" aria-hidden="true"><i /><i /><i /></span>
               <span>{agentName}</span>
-            </h3>
-            <div className="agent-tabs" role="group" aria-label="Agent">
-              {AGENTS.map((a) => (
-                <button key={a.id} type="button" className="agent-tab" aria-pressed={agent === a.id} onClick={() => { setAgent(a.id); setMsgs([]) }} data-testid={`button-agent-${a.id}`}>
-                  {a.name}
-                </button>
-              ))}
             </div>
-            <div className="session" aria-live="polite">
-              {msgs.length === 0 && <p className="empty">Pick a request. You’ll see exactly which memory is packed in, and what is held back.</p>}
-              {msgs.map((m, i) =>
-                m.k === 'pack' ? (
-                  <pre key={i} className="pack" data-testid="text-context-pack">
-                    {m.t}
-                  </pre>
-                ) : (
-                  <p key={i} className={`bubble ${m.k}`} data-testid={`text-message-${i}`}>
-                    {m.t}
-                  </p>
-                ),
-              )}
-              <div className="asks">
-                {ASKS.map((a) => (
-                  <button key={a.id} type="button" className="ask" onClick={() => ask(a.id)} data-testid={`button-ask-${a.id}`}>
-                    {a.q}
+            <div className="os-body">
+              <div className="agent-tabs" role="group" aria-label="Agent">
+                {AGENTS.map((a) => (
+                  <button key={a.id} type="button" className="agent-tab" aria-pressed={agent === a.id} onClick={() => { setAgent(a.id); setMsgs([]) }} data-testid={`button-agent-${a.id}`}>
+                    {a.name}
                   </button>
                 ))}
+              </div>
+              <div className="session" aria-live="polite">
+                {msgs.length === 0 && <p className="empty">Pick a request. You’ll see exactly which memory is packed in, and what is held back.</p>}
+                {msgs.map((m, i) =>
+                  m.k === 'pack' ? (
+                    <pre key={i} className="pack" data-testid="text-context-pack">{m.t}</pre>
+                  ) : (
+                    <p key={i} className={`bubble ${m.k}`} data-testid={`text-message-${i}`}>
+                      {m.k === 'agent' && !reduced ? <Stream text={m.t} /> : m.t}
+                    </p>
+                  ),
+                )}
+                <div className="asks">
+                  {ASKS.map((a) => (
+                    <button key={a.id} type="button" className="ask" onClick={() => ask(a.id)} data-testid={`button-ask-${a.id}`}>
+                      {a.q}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+  )
+}
+
+function Stream({ text }: { text: string }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    let i = 0
+    const id = window.setInterval(() => {
+      i += 2
+      setN(Math.min(text.length, i))
+      if (i >= text.length) window.clearInterval(id)
+    }, 18)
+    return () => window.clearInterval(id)
+  }, [text])
+  return (
+    <>
+      {text.slice(0, n)}
+      {n < text.length && <span className="caret" aria-hidden="true" />}
+    </>
   )
 }

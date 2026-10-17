@@ -13,7 +13,7 @@ const ANSWERS: Record<string, { q: string; a: string }> = {
   },
   session: {
     q: 'What does an agent still see during a session?',
-    a: 'Only the memory you grant, packed into that session. What a remote agent receives, it receives — its provider may retain it. Unplugging stops future access. It does not pull back anything already shared. Prefer temporary chats where an agent offers them.',
+    a: 'Only the memory you grant, packed into that session. What a remote agent receives, it receives — its provider may retain it. Disconnecting the cable or unpairing the phone stops future access. It does not pull back anything already shared. Prefer temporary chats where an agent offers them.',
   },
   log: {
     q: 'Where is the audit log?',
@@ -25,7 +25,7 @@ const ANSWERS: Record<string, { q: string; a: string }> = {
   },
   hardware: {
     q: 'When does the card ship?',
-    a: 'It doesn’t, yet. The custom card, with its built-in USB-C connector, is a concept. Nothing has been manufactured, and there is no ship date. Software comes first, and it is still in development.',
+    a: 'It doesn’t, yet. The card is a concept: graphite, with a USB-C port on the left edge. A cable connects it to a laptop, and it can pair to a phone over Bluetooth. Nothing has been manufactured, and there is no ship date. Software comes first, and it is still in development.',
   },
   orders: {
     q: 'Can I order one?',
