@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { gsap, ScrollTrigger } from '@/landing/lib/motion'
+import { gsap, prefersStatic, ScrollTrigger } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
 import { Magnetic } from '@/landing/components/Magnetic'
 import { pose, signals } from '@/landing/three/pose'
@@ -22,7 +22,7 @@ export function Opening({ reduced }: { reduced: boolean }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (reduced) return
+    if (reduced || prefersStatic()) return
     const el = section.current
     const pinned = pin.current
     const view = track.current

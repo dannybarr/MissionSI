@@ -1,5 +1,5 @@
 import '@/landing/index.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { useLandingScroll } from '@/landing/lib/smooth'
 import { useReveals } from '@/landing/lib/reveal'
 import { Opening } from '@/landing/sections/Opening'
@@ -11,8 +11,12 @@ import { StudioTeaser } from '@/landing/sections/StudioTeaser'
 import { PlugSequence } from '@/landing/sections/PlugSequence'
 import { Faq } from '@/landing/sections/Faq'
 import { Close, Footer } from '@/landing/sections/Close'
+import { OpenCard } from '@/landing/sections/OpenCard'
+import { Captures } from '@/landing/sections/Captures'
 
 const LINKS = [
+  ['inside', 'Inside'],
+  ['captures', 'Captures'],
   ['how', 'How it works'],
   ['agents', 'Agents'],
   ['faq', 'Questions'],
@@ -76,7 +80,10 @@ function Nav() {
 
 export default function LandingApp() {
   const [reduced, setReduced] = useState(false)
-  useEffect(() => {
+  // Layout, not passive: ScrollTrigger pins wrap sections, and a later passive
+  // update then makes React insert against a node GSAP moved. Resolve reduced
+  // motion before those effects run.
+  useLayoutEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
     const q = new URLSearchParams(window.location.search).has('reduced')
     const apply = () => setReduced(mq.matches || q)
@@ -89,6 +96,11 @@ export default function LandingApp() {
 
   return (
     <div className={`mission-site ${reduced ? 'reduced' : ''}`}>
+      <div className="site-grain" data-site-texture="true" aria-hidden="true">
+        <div className="site-grain-wash" />
+        <div className="site-grain-dark" />
+        <div className="site-grain-light" />
+      </div>
       <a className="skip" href="#top">
         Skip to content
       </a>
@@ -97,6 +109,8 @@ export default function LandingApp() {
         <Opening reduced={reduced} />
         <Statement reduced={reduced} />
         <Flags reduced={reduced} />
+        <OpenCard reduced={reduced} />
+        <Captures reduced={reduced} />
         <Forest reduced={reduced} />
         <HowItWorks reduced={reduced} />
         <StudioTeaser reduced={reduced} />

@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import Lenis from 'lenis'
-import { gsap, ScrollTrigger } from './motion'
+import { gsap, prefersStatic, ScrollTrigger } from './motion'
 
 /** Smooth scroll for the landing page only. Torn down on leave so Studio is unaffected. */
 export function useLandingScroll(reduced: boolean) {
   useEffect(() => {
-    if (reduced) return
+    if (reduced || prefersStatic()) return
     const lenis = new Lenis({
       lerp: 0.09,
       wheelMultiplier: 0.95,
