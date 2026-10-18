@@ -80,12 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Mission — a personal AI memory you own and carry" },
       { name: "description", content: "Mission is a personal AI memory kept encrypted on a device you own." },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "Mission" },
       { property: "og:title", content: "Mission — your memory, on you" },
       { property: "og:description", content: "A personal AI memory, encrypted on a device you own." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

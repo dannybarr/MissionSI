@@ -1,4 +1,4 @@
-# Migration roadmap (Replit → Lovable)
+# Migration roadmap (Replit → TanStack Start)
 
 - [x] Copy mission-studio source into src/studio, rewrite `@/` imports
 - [x] Copy oki-home landing source into src/landing, rewrite `@/` imports
