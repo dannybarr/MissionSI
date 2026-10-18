@@ -15,6 +15,8 @@ import { Presentation } from '@/studio/components/Presentation';
 import { RenderDialog } from '@/studio/components/dialogs/RenderDialog';
 import { VariantDialog } from '@/studio/components/dialogs/VariantDialog';
 import { ErrorDialog, RestoreDialog } from '@/studio/components/dialogs/ConfirmDialogs';
+import { ReserveDialog } from '@/studio/components/dialogs/ReserveDialog';
+import { clearTeaserPlacement, readTeaserPlacement } from '@/landing/lib/placement';
 
 const PRESET_KEYS: Record<string, ViewPreset> = { '1': 'front', '2': 'back', '3': 'side', '4': 'top', '5': 'iso' };
 
@@ -24,6 +26,7 @@ export default function Studio() {
   const [renderOpen, setRenderOpen] = useState(false);
   const [variantOpen, setVariantOpen] = useState(false);
   const [backupsOpen, setBackupsOpen] = useState(false);
+  const [reserveOpen, setReserveOpen] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [presetSignal, setPresetSignal] = useState(0);
@@ -49,6 +52,23 @@ export default function Studio() {
       toast({ title: 'Saved project could not be restored', description: `${b.reason} A copy was set aside: Export menu, Local backups.`, variant: 'destructive' });
     if (b.kind === 'loaded') toast({ title: 'Project restored', description: `${b.project.name} · ${b.project.variants.length} variants` });
   }, [studio.bootNotice, toast]);
+
+  // layout carried over from the homepage teaser: applied once as a new variant, then forgotten
+  const teaserApplied = useRef(false);
+  useEffect(() => {
+    if (teaserApplied.current) return;
+    teaserApplied.current = true;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('from') !== 'teaser') return;
+    url.searchParams.delete('from');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    const placement = readTeaserPlacement();
+    clearTeaserPlacement();
+    if (!placement) return;
+    studio.applyTeaser(placement);
+    const n = placement.features?.length ?? 0;
+    toast({ title: 'Your homepage layout is in', description: `Saved as “Landing design”${n ? ` with ${n} hardware module${n > 1 ? 's' : ''}` : ''}. The presets are unchanged.` });
+  }, [studio, toast]);
 
   const handleSave = useCallback(() => {
     const s = studio.save();
@@ -157,6 +177,7 @@ export default function Studio() {
         onImport={() => fileRef.current?.click()}
         onRestore={() => setRestoreOpen(true)}
         onBackups={() => setBackupsOpen(true)}
+        onReserve={() => setReserveOpen(true)}
       />
       <input ref={fileRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => handleImportFile(e.target.files?.[0])} data-testid="input-import-file" />
       {/* Original three-column studio, always: narrower windows scroll horizontally instead of restyling. */}
@@ -174,6 +195,7 @@ export default function Studio() {
       <VariantDialog open={variantOpen} onOpenChange={setVariantOpen} />
       <RestoreDialog open={restoreOpen} onOpenChange={setRestoreOpen} />
       <BackupsDialog open={backupsOpen} onOpenChange={setBackupsOpen} />
+      <ReserveDialog open={reserveOpen} onOpenChange={setReserveOpen} />
       <ErrorDialog title="Import failed" message={importError} onClose={() => setImportError(null)} />
     </div>
   );

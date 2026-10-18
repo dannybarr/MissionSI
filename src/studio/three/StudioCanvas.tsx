@@ -108,6 +108,17 @@ function Rig({ design, view, primary, interactive, turntable, selected, onSelect
     if (turntable && controls.current) controls.current.rotate(dt * 0.32, 0, false);
   });
 
+  // Edits from the inspector arrive without pointer events, so ask for fresh frames explicitly.
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    let n = 0;
+    let id = requestAnimationFrame(function kick() {
+      invalidate();
+      if (++n < 4) id = requestAnimationFrame(kick);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [design, view, selected, selectedMark, invalidate]);
+
   /* ---------- mark drag on its face plane (front or mirrored back) ---------- */
   const [guide, setGuide] = useState<SnapGuide | null>(null);
   const designRef = useRef(design);
@@ -369,7 +380,8 @@ export function StudioCanvas(props: Props) {
 function CanvasInner(props: Props) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
+      frameloop="always"
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       onCreated={({ gl }) => {

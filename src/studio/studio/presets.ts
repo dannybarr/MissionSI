@@ -119,6 +119,16 @@ export const MATERIALS: Record<MaterialPreset, MaterialPresetDef> = {
     note: 'Zirconia, soft polish',
     params: { color: '#ebe8e1', metalness: 0, roughness: 0.28, reflectivity: 0.8, direction: 0, brush: 0, grain: 0.05, clearcoat: 1 },
   },
+  missionBlue: {
+    label: 'Mission blue',
+    note: 'Deep anodised blue, the card face',
+    params: { color: '#17356f', metalness: 0.72, roughness: 0.42, reflectivity: 0.85, direction: 0, brush: 0.12, grain: 0.45, clearcoat: 0.08 },
+  },
+  matteGrey: {
+    label: 'Matte grey',
+    note: 'Soft bead-blast grey',
+    params: { color: '#8a8884', metalness: 0.9, roughness: 0.62, reflectivity: 0.7, direction: 0, brush: 0.08, grain: 0.85, clearcoat: 0 },
+  },
 };
 
 export const MATERIAL_ORDER = Object.keys(MATERIALS) as MaterialPreset[];

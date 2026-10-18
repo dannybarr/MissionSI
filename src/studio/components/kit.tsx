@@ -80,7 +80,7 @@ export function Section({ title, children, aside, defaultOpen = true }: { title:
   const id = useId();
   return (
     <section className="border-b border-white/[0.06]">
-      <div className="flex h-9 items-center justify-between px-4">
+      <div className="flex h-11 items-center justify-between px-5">
         <button
           type="button"
           aria-expanded={open}
@@ -95,7 +95,7 @@ export function Section({ title, children, aside, defaultOpen = true }: { title:
         {aside}
       </div>
       {open && (
-        <div id={id} className="space-y-2.5 px-4 pb-4">
+        <div id={id} className="space-y-3.5 px-5 pb-5">
           {children}
         </div>
       )}
