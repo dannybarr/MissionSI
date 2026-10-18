@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { EASE, gsap } from '@/landing/lib/motion'
+import { EASE, gsap, prefersStatic } from '@/landing/lib/motion'
 
 const LINES = ['Your memory.', 'Any agent.', 'Nobody else.']
 
@@ -20,7 +20,7 @@ export function Statement({ reduced }: { reduced: boolean }) {
   useEffect(() => {
     const section = root.current
     const row = track.current
-    if (!section || !row || reduced) return
+    if (!section || !row || reduced || prefersStatic()) return
     const words = section.querySelectorAll<HTMLElement>('[data-word]')
     const facts = row.querySelectorAll<HTMLElement>('.fact')
     const ctx = gsap.context(() => {

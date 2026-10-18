@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { gsap } from '@/landing/lib/motion'
+import { gsap, prefersStatic } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
 import { AGENT_MARKS } from './marks'
 
@@ -24,7 +24,7 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
   const [step, setStep] = useState(reduced ? 2 : 0)
 
   useEffect(() => {
-    if (reduced) {
+    if (reduced || prefersStatic()) {
       setPhase(2)
       setStep(2)
       return

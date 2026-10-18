@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { EASE, gsap, ScrollTrigger } from '@/landing/lib/motion'
+import { EASE, gsap, prefersStatic, ScrollTrigger } from '@/landing/lib/motion'
 
 type AgentId = 'claude' | 'chatgpt' | 'local'
 type ScopeId = 'prefs' | 'work' | 'people' | 'health'
@@ -49,7 +49,7 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
 
   useEffect(() => {
     const el = root.current
-    if (!el || reduced) return
+    if (!el || reduced || prefersStatic()) return
     const mm = gsap.matchMedia(el)
     mm.add('(min-width: 1101px) and (min-height: 700px)', () => {
       setPinned(true)

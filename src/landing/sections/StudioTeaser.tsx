@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { gsap } from '@/landing/lib/motion'
+import { gsap, prefersStatic } from '@/landing/lib/motion'
 import { Bluetooth, CircleDot, Cpu, MapPin, Mic, Nfc, Plus, Vibrate, X } from 'lucide-react'
 import { CardFace } from '@/landing/components/CardFace'
 import { Magnetic } from '@/landing/components/Magnetic'
@@ -145,7 +145,7 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
   }, [placed])
 
   useEffect(() => {
-    if (reduced) return
+    if (reduced || prefersStatic()) return
     let dead = false
     let root: { unmount: () => void } | null = null
     import('@/landing/three/TeaserWorld').then(({ mountTeaser }) => {

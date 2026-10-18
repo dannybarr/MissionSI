@@ -22,4 +22,10 @@ export const EASE = {
 
 export const DUR = { type: 1.15, copy: 0.9, object: 1.4 }
 
+/** True when the page should stay static. Checked inside effects because the reduced prop flips after the first effect flush. */
+export function prefersStatic() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches || new URLSearchParams(window.location.search).has('reduced')
+}
+
 export { gsap, ScrollTrigger, SplitText }

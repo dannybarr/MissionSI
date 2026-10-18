@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { DUR, EASE, gsap, ScrollTrigger, SplitText } from './motion'
+import { DUR, EASE, gsap, prefersStatic, ScrollTrigger, SplitText } from './motion'
 
 /**
  * Scroll reveals for the whole landing page.
@@ -9,7 +9,7 @@ import { DUR, EASE, gsap, ScrollTrigger, SplitText } from './motion'
  */
 export function useReveals(reduced: boolean) {
   useEffect(() => {
-    if (reduced) return
+    if (reduced || prefersStatic()) return
     const root = document.querySelector<HTMLElement>('.mission-site')
     if (!root) return
     let ctx: gsap.Context | null = null
