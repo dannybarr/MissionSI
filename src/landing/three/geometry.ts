@@ -27,8 +27,9 @@ export function outlinePoints(inset: number, step = 0.035): THREE.Vector2[] {
   const x1 = W / 2
   const y0 = -H / 2
   const y1 = H / 2
-  const long = inset > 0.04 ? { ...LONG_NOTCH, depth: 0 } : LONG_NOTCH
-  const side = inset > 0.04 ? { ...SIDE_NOTCH, depth: 0 } : SIDE_NOTCH
+  // The inset face follows the machined silhouette, including all four reliefs.
+  const long = LONG_NOTCH
+  const side = SIDE_NOTCH
   const pts: THREE.Vector2[] = []
   const arc = (cx: number, cy: number, a0: number, a1: number) => {
     const n = 8

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { gsap, prefersStatic } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
 import { AGENT_MARKS } from './marks'
@@ -19,6 +19,7 @@ const STEPS = [
 const READOUT = ['Cable not connected', 'Connecting · unlocking memory', 'Connected · 4 agents granted · 1 held back', 'Paired with iPhone', 'Disconnected · access ended']
 
 export function PlugSequence({ reduced }: { reduced: boolean }) {
+  const cableId = useId().replace(/:/g, '')
   const root = useRef<HTMLElement>(null)
   const [phase, setPhase] = useState(reduced ? 2 : 0)
   const [step, setStep] = useState(reduced ? 2 : 0)
@@ -92,9 +93,20 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
           </div>
 
           <svg className="conn-cable" viewBox="0 0 240 80" aria-hidden="true">
-            <path pathLength={1} d="M8 40 C 70 40, 90 18, 140 28 S 200 58, 232 40" />
-            <circle cx="8" cy="40" r="5" />
-            <rect x="224" y="32" width="14" height="16" rx="3" />
+            <defs>
+              <linearGradient id={cableId} x2="0" y2="1">
+                <stop offset="0" stopColor="#fffdf7" />
+                <stop offset="0.5" stopColor="#e7e3db" />
+                <stop offset="1" stopColor="#bab8b3" />
+              </linearGradient>
+            </defs>
+            <path d="M0 40 C50 40 38 72 102 72 S178 40 216 40" style={{ stroke: `url(#${cableId})` }} />
+            <rect x="-8" y="34" width="20" height="12" rx="4" fill="#efece5" />
+            <g className="conn-tip">
+              <rect x="212" y="36" width="10" height="8" rx="3" fill="#e6e2da" />
+              <rect x="218" y="33" width="17" height="14" rx="4" fill="#f4f1eb" />
+              <rect x="234" y="35" width="8" height="10" rx="2" fill="#c4c8cc" />
+            </g>
           </svg>
 
           <div className="conn-card">

@@ -124,7 +124,7 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .live-status .st-dot { opacity: var(--status, 1); }
 .live-status .st-ring { stroke: color-mix(in srgb, #e6f1ff calc(var(--status, 1) * 100%), #6a6a70); stroke-opacity: calc(0.6 + var(--status, 1) * 0.4); }
 
-/* ---------- opening: spin, then the tray ---------- */
+/* ---------- opening: inspect, connect, carry ---------- */
 .opening { background: transparent; }
 .opening-pin { position: relative; height: 100svh; }
 .opening-view { position: absolute; inset: 0; }
@@ -144,6 +144,9 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   translate: 0 -50%; pointer-events: none; transition: opacity 0.7s var(--ease);
 }
 .opening.is-ready .opening-fallback { opacity: 0; }
+.opening-connection-caption { position: absolute; z-index: 2; left: var(--gutter); bottom: 6vh; margin: 0; font-size: clamp(22px, 2.6vw, 38px); line-height: 1.15; letter-spacing: -0.035em; opacity: var(--connection-caption, 0); pointer-events: none; }
+.opening-connection-caption span { color: var(--ink-soft); }
+.mission-site .site-grain { opacity: .35; }
 
 /* ---------- statement ---------- */
 .statement { background: var(--paper); }
@@ -407,9 +410,9 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .mbp-deck { background: linear-gradient(180deg, #2c2c2e, #161617); border-radius: 0 0 12px 12px; margin: 0 2px; padding: 8px 12px 12px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
 .mbp-keys { height: 52px; border-radius: 3px; background: repeating-linear-gradient(90deg, #141416 0 13px, #0c0c0d 13px 17px), repeating-linear-gradient(#141416 0 9px, transparent 9px 12px); background-color: #0a0a0b; }
 .mbp-track { width: 42%; height: 26px; margin: 8px auto 0; border-radius: 5px; background: #1a1a1c; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
-.conn-cable { width: min(18vw, 220px); height: 70px; overflow: visible; opacity: calc(1 - var(--phone)); }
-.conn-cable path { fill: none; stroke: #2a2a2c; stroke-width: 4.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--cable)); }
-.conn-cable circle, .conn-cable rect { fill: #c5c7cc; opacity: var(--cable); }
+.conn-cable { width: min(18vw, 220px); height: 70px; overflow: visible; opacity: calc(1 - var(--phone)); filter: drop-shadow(0 3px 2px #0008); }
+.conn-cable path { fill: none; stroke-width: 5; stroke-linecap: round; }
+.conn-tip { transform: translateX(calc((var(--cable) - 1) * 8px)); }
 .conn-card { width: min(280px, 24vw); filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.4)); }
 .conn-card .live-status { --status: var(--status); }
 .conn-phone { position: absolute; right: 10vw; top: 50%; translate: 0 -50%; width: min(220px, 22vw); opacity: var(--phone); transform: translateY(calc((1 - var(--phone)) * 16px)); }
@@ -592,7 +595,8 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
   .opening .lede { font-size: 15.5px; line-height: 1.4; }
   .opening-pin { height: 100svh; overflow: hidden; }
   .opening-copy { position: absolute; top: 84px; bottom: 26svh; left: var(--gutter); right: var(--gutter); width: auto; translate: none; padding: 0; }
-  .opening-view { position: absolute; left: 0; right: 0; bottom: 0; top: auto; height: 24svh; }
+  .opening-view { position: absolute; left: 0; right: 0; top: auto; bottom: calc(var(--inspection, 0) * 13svh); height: 62svh; clip-path: inset(calc((1 - var(--inspection, 0)) * 51%) 0 0 0); }
+  .opening-connection-caption { bottom: 9svh; }
   .opening-tray-copy { left: var(--gutter); right: var(--gutter); bottom: 12px; width: auto; }
   .opening-fallback { width: min(72vw, 300px); left: 50%; right: auto; top: auto; bottom: 2svh; translate: -50% 0; }
   .hero-actions { margin-top: 16px; }

@@ -9,6 +9,7 @@ import { drawHeroPrint, printPlaneSize } from './print'
 import { ProductCard } from './ProductCard'
 import { KeyFob } from './KeyFob'
 import { AirPods } from './AirPods'
+import { ConnectionRig } from './ConnectionRig'
 
 const TRAY_Y = -19
 const hero = new THREE.Vector3()
@@ -24,6 +25,7 @@ function StudioEnv() {
     const pmrem = new THREE.PMREMGenerator(gl)
     const room = new RoomEnvironment()
     const tex = pmrem.fromScene(room, 0.04).texture
+    room.dispose()
     scene.environment = tex
     scene.environmentIntensity = 0.58
     return () => {
@@ -54,6 +56,7 @@ function useHeroPrint() {
       drawHeroPrint(ctx, tex.c.width, tex.c.height, img)
       tex.t.needsUpdate = true
     }
+    draw(null)
     const img = new Image()
     img.decoding = 'async'
     img.onload = () => live && draw(img)
@@ -270,6 +273,7 @@ function Carry({ blob }: { blob: THREE.Texture }) {
 export function OpeningScene() {
   const cam = useRef<THREE.PerspectiveCamera>(null)
   const card = useRef<THREE.Group>(null)
+  const tray = useRef<THREE.Group>(null)
   const heroShadow = useRef<THREE.Mesh>(null)
   const heroShadowMat = useRef<THREE.MeshBasicMaterial>(null)
   const light = useRef<THREE.DirectionalLight>(null)
@@ -287,7 +291,7 @@ export function OpeningScene() {
     const height = size.height
     if (!camera || width < 2 || height < 2) return
     const mobile = width < 760
-    const fraction = mobile ? 0.62 : width < 1100 ? 0.4 : 0.31
+    const fraction = mobile ? 0.76 : width < 1100 ? 0.38 : 0.37
     const aspect = width / height
     const fov = 16
     const dist = CARD.w / (fraction * 2 * Math.tan((fov * Math.PI) / 360) * aspect)
@@ -295,17 +299,18 @@ export function OpeningScene() {
     const visH = visW / aspect
     const t = pose.cam
     const lay = t * t * (3 - 2 * t)
-    const cardX = mobile ? 0 : visW * 0.15
+    const cardX = mobile ? 0 : visW * 0.25
     const cardY = mobile ? 0 : 0.15
-    const trayX = mobile ? 0 : 3.4
+    const trayX = 3.4
     hero.set(cardX, cardY, 0)
-    slot.set(trayX - 0.6, TRAY_Y + 0.46 + pose.settle, -2.4)
+    slot.set(trayX - 0.6, TRAY_Y + 0.28 + CARD.t / 2 + 0.012 + pose.settle, -2.4)
     const cardPos = hero.lerp(slot, lay)
-    look.set(cardX - (mobile ? 0 : visW * 0.03), cardY, 0)
-    lookT.set(trayX, TRAY_Y + 0.5, 0.2)
+    look.set(THREE.MathUtils.lerp(0, cardX - (mobile ? 5.2 : 7.8), pose.connection), cardY + (mobile ? visH * 0.22 * (1 - pose.inspection) : 0), 0)
+    lookT.set(trayX - (mobile ? 0 : 7), TRAY_Y + (mobile ? -4.8 : 0.5), 0.2)
     look.lerp(lookT, t)
     const elev = THREE.MathUtils.lerp(0.07, 1.34, t)
-    const distNow = THREE.MathUtils.lerp(dist, mobile ? 36 : 64, t)
+    const connectionDistance = Math.max(dist, (mobile ? 21 : 34) / (2 * Math.tan((fov * Math.PI) / 360) * aspect))
+    const distNow = THREE.MathUtils.lerp(THREE.MathUtils.lerp(dist, connectionDistance, pose.connection), mobile ? 110 : 76, t)
     camPos.set(look.x, look.y + Math.sin(elev) * distNow, look.z + Math.cos(elev) * distNow)
     camera.position.copy(camPos)
     camera.lookAt(look)
@@ -313,12 +318,14 @@ export function OpeningScene() {
     camera.updateProjectionMatrix()
 
     const g = card.current
+    if (tray.current) tray.current.position.y = TRAY_Y - 20 * (1 - lay)
     if (g) {
       g.position.copy(cardPos)
       g.rotation.order = 'YXZ'
-      g.rotation.y = pose.spin + pose.tiltY * (1 - lay) - 0.14 * lay
-      g.rotation.x = pose.tiltX * (1 - lay) - (Math.PI / 2) * lay
-      g.rotation.z = -0.04 * lay
+      g.rotation.y = (pose.spin + pose.tiltY) * (1 - lay)
+      g.rotation.x = (pose.pitch + pose.tiltX) * (1 - lay) - (Math.PI / 2) * lay
+      // In-plane yaw keeps the card flat at contact, rather than burying one edge.
+      g.rotation.z = -0.04 * (1 - lay) - 0.14 * lay
     }
     if (light.current) {
       light.current.position.set(cardPos.x - 8, cardPos.y + 16, cardPos.z + 10)
@@ -369,7 +376,7 @@ export function OpeningScene() {
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial ref={heroShadowMat} map={blob} transparent depthWrite={false} opacity={0.3} />
       </mesh>
-      <group position={[3.4, TRAY_Y, 0]}>
+      <group ref={tray} position={[3.4, TRAY_Y - 20, 0]}>
         <Tray />
         <Carry blob={blob} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
@@ -379,6 +386,7 @@ export function OpeningScene() {
       </group>
       <group ref={card}>
         <ProductCard print={print} glow={glow} />
+        <ConnectionRig />
       </group>
     </>
   )

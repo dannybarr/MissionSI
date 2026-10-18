@@ -5,7 +5,7 @@ const W = 860
 const H = 550
 
 /** Outer rim. One machined notch on each long edge, one on each short edge. Units are 0.1 mm. */
-function outline() {
+function outline(inset = 0) {
   const r = 32
   const x1 = 307
   const x2 = 528
@@ -15,7 +15,7 @@ function outline() {
   const y2 = 360
   const sd = 17
   const sr = 12
-  return [
+  const path = [
     `M${r} 0`,
     `H${x1 - ramp}`,
     `L${x1} ${nd}`,
@@ -43,6 +43,9 @@ function outline() {
     `A${r} ${r} 0 0 1 ${r} 0`,
     'Z',
   ].join('')
+  if (!inset) return path
+  // Preserve the stepped face silhouette in the non-WebGL presentation as well.
+  return `M${32 + inset} ${inset}H293L307 ${21 + inset}H528L542 ${inset}H${828 - inset}Q${860 - inset} ${inset} ${860 - inset} ${32 + inset}V158L${843 - inset} 170V360L${860 - inset} 372V${518 - inset}Q${860 - inset} ${550 - inset} ${828 - inset} ${550 - inset}H542L528 ${529 - inset}H307L293 ${550 - inset}H${32 + inset}Q${inset} ${550 - inset} ${inset} ${518 - inset}V372L${17 + inset} 360V170L${inset} 158V${32 + inset}Q${inset} ${inset} ${32 + inset} ${inset}Z`
 }
 
 function rounded(inset: number) {
@@ -55,8 +58,8 @@ function rounded(inset: number) {
 }
 
 const OUTER = outline()
-const GROOVE = rounded(30)
-const FACE = rounded(36)
+const GROOVE = outline(28)
+const FACE = outline(32)
 
 export interface CardFaceProps {
   alt?: string

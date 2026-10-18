@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CardFace } from "@/landing/components/CardFace";
 import { HalftoneIcon } from "@/landing/components/HalftoneIcon";
 import { EASE, gsap, prefersStatic, ScrollTrigger } from "@/landing/lib/motion";
-import { CAPTURE_TABS } from "./captures";
+import { CAPTURE_TABS } from "./captureContent";
 
 export function Captures({ reduced }: { reduced: boolean }) {
   const root = useRef<HTMLElement>(null);

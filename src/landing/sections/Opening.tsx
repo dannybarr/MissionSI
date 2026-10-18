@@ -1,17 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { gsap, prefersStatic, ScrollTrigger } from '@/landing/lib/motion'
+import { gsap, prefersStatic } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
 import { Magnetic } from '@/landing/components/Magnetic'
 import { pose, signals } from '@/landing/three/pose'
+import { phase, productMotion } from '@/landing/three/productMotion'
 import { Hero } from './Hero'
 import { Tray } from './Tray'
-
-const TURN = (1260 * Math.PI) / 180
-
-function smooth(t: number) {
-  const x = Math.max(0, Math.min(1, t))
-  return x * x * (3 - 2 * x)
-}
 
 export function Opening({ reduced }: { reduced: boolean }) {
   const section = useRef<HTMLElement>(null)
@@ -30,7 +24,7 @@ export function Opening({ reduced }: { reduced: boolean }) {
     const trayEl = trayCopy.current
     if (!el || !pinned || !view || !copyEl || !trayEl) return
 
-    pose.spin = Math.PI
+    Object.assign(pose, productMotion(0))
     pose.tiltX = 0
     pose.tiltY = 0
     pose.cam = 0
@@ -44,8 +38,7 @@ export function Opening({ reduced }: { reduced: boolean }) {
     let release = () => {}
     const stageP = import('@/landing/three/stage')
     const worldP = import('@/landing/three/OpeningWorld')
-    stageP.then(async (stage) => {
-      const world = await worldP
+    Promise.all([stageP, worldP]).then(async ([stage, world]) => {
       if (dead || !track.current) return
       await stage.acquireStage()
       if (dead || !track.current) {
@@ -55,6 +48,9 @@ export function Opening({ reduced }: { reduced: boolean }) {
       release = () => stage.releaseStage()
       unregister = stage.registerView('opening', track.current, <world.OpeningScene />)
       stage.setViewActive('opening', true)
+    }).catch(() => {
+      // Keep the static product and ordinary page flow usable if WebGL fails.
+      if (!dead) el.classList.add('opening-unavailable')
     })
 
     const io = new IntersectionObserver(
@@ -65,68 +61,45 @@ export function Opening({ reduced }: { reduced: boolean }) {
     )
     io.observe(view)
 
-    let facingFront = false
-    let sprung = false
-    const spinTo = (front: boolean) => {
-      pose.spinning = 1
-      gsap.to(pose, { tiltX: 0, tiltY: 0, duration: 0.35, overwrite: 'auto' })
-      gsap.to(pose, {
-        spin: front ? Math.PI + TURN : Math.PI,
-        duration: 1.5,
-        ease: 'expo.out',
-        overwrite: 'auto',
-        onComplete: () => {
-          pose.spinning = 0
-        },
-      })
+    const progress = { value: 0 }
+    const render = () => {
+      const next = productMotion(progress.value)
+      Object.assign(pose, next)
+      copyEl.style.opacity = String(next.copy)
+      // Preserve the CSS centring translate on desktop and the top-aligned mobile layout.
+      copyEl.style.transform = `translateY(${-(1 - next.copy) * 18}px)`
+      copyEl.inert = next.copy < 0.05
+      trayEl.style.opacity = String(next.trayCopy)
+      trayEl.style.translate = `0 ${(1 - next.trayCopy) * 12}px`
+      el.style.setProperty('--connection-caption', String(next.connection))
+      pose.inspection = phase(progress.value, 0.24, 0.4)
+      el.style.setProperty('--inspection', String(pose.inspection))
     }
-
     const ctx = gsap.context(() => {
-      ScrollTrigger.create({
+      gsap.to(progress, {
+        value: 1,
+        ease: 'none',
+        onUpdate: render,
+        scrollTrigger: {
         trigger: el,
         start: 'top top',
-        end: '+=280%',
+        end: () => `+=${window.innerHeight * (window.innerWidth < 760 ? 3.2 : 3.8)}`,
         pin: pinned,
+        scrub: 0.65,
         anticipatePin: 1,
         invalidateOnRefresh: true,
-        onUpdate(self) {
-          const p = self.progress
-          const wantFront = p > 0.045
-          if (wantFront !== facingFront) {
-            facingFront = wantFront
-            spinTo(wantFront)
-          }
-          const travel = smooth(Math.max(0, Math.min(1, (p - 0.16) / 0.74)))
-          pose.cam = travel
-          const fade = smooth(Math.max(0, Math.min(1, (travel - 0.04) / 0.2)))
-          copyEl.style.opacity = String(1 - fade)
-          copyEl.style.translate = `0 ${-fade * 28}px`
-          const trayIn = smooth(Math.max(0, Math.min(1, (travel - 0.52) / 0.22)))
-          trayEl.style.opacity = String(trayIn)
-          trayEl.style.translate = `0 ${(1 - trayIn) * 24}px`
-          if (travel > 0.96 && !sprung) {
-            sprung = true
-            gsap.fromTo(pose, { settle: 0.9 }, { settle: 0, duration: 1.05, ease: 'elastic.out(1, 0.52)', overwrite: 'auto' })
-            gsap.fromTo(pose, { nudge: 1 }, { nudge: 0, duration: 1.15, ease: 'expo.out', overwrite: 'auto' })
-          }
-          if (travel < 0.82 && sprung) {
-            sprung = false
-            gsap.killTweensOf(pose, 'settle,nudge')
-            pose.settle = 0
-            pose.nudge = 0
-          }
         },
       })
     }, el)
 
     let tiltOff = () => {}
     if (window.matchMedia('(pointer: fine)').matches) {
-      const maxY = (18 * Math.PI) / 180
-      const maxX = (15 * Math.PI) / 180
+      const maxY = (3 * Math.PI) / 180
+      const maxX = (2 * Math.PI) / 180
       const qy = gsap.quickTo(pose, 'tiltY', { duration: 0.6, ease: 'power3.out' })
       const qx = gsap.quickTo(pose, 'tiltX', { duration: 0.6, ease: 'power3.out' })
       const onMove = (e: PointerEvent) => {
-        if (pose.cam > 0.05 || pose.spinning > 0.5) {
+        if (progress.value > 0.06) {
           qx(0)
           qy(0)
           return
@@ -174,6 +147,7 @@ export function Opening({ reduced }: { reduced: boolean }) {
     <section className={`opening ${ready ? 'is-ready' : ''}`} id="top" ref={section}>
       <div className="opening-pin" ref={pin}>
         <div className="opening-view" ref={track} />
+        <p className="opening-connection-caption">A physical connection.<br /><span>Your memory, within reach.</span></p>
         <div className="opening-copy" ref={copy}>
           <p className="eyebrow" data-testid="status-prototype" data-reveal data-reveal-now data-delay="0.15">
             <i />

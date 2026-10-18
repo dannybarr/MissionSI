@@ -33,27 +33,29 @@ export function ProductCard({ print, glow: _glow }: { print: THREE.Texture | nul
   const mats = useMemo(() => {
     const rough = beadTexture()
     const body = new THREE.MeshPhysicalMaterial({
-      color: '#2c2e33',
-      metalness: 0.92,
-      roughness: 0.46,
+      color: '#424449',
+      metalness: 0.78,
+      roughness: 0.48,
       roughnessMap: rough,
       bumpMap: rough,
-      bumpScale: 0.01,
-      envMapIntensity: 0.65,
-      clearcoat: 0.16,
+      bumpScale: 0.002,
+      envMapIntensity: 0.85,
+      clearcoat: 0.06,
       clearcoatRoughness: 0.42,
     })
     const face = new THREE.MeshPhysicalMaterial({
-      color: '#121416',
-      metalness: 1,
-      roughness: 0.82,
+      color: '#242629',
+      metalness: 0.45,
+      roughness: 0.66,
       roughnessMap: rough,
       bumpMap: rough,
-      bumpScale: 0.008,
-      envMapIntensity: 0.22,
+      bumpScale: 0.0015,
+      envMapIntensity: 0.5,
     })
-    const ink = new THREE.MeshBasicMaterial({
+    const ink = new THREE.MeshStandardMaterial({
       color: '#ffffff',
+      roughness: 0.74,
+      metalness: 0.15,
       transparent: true,
       depthWrite: false,
       polygonOffset: true,
@@ -68,7 +70,7 @@ export function ProductCard({ print, glow: _glow }: { print: THREE.Texture | nul
 
   const backPanel = useMemo(() => {
     const g = geos.panel.clone()
-    g.scale(1, 1, -1)
+    g.rotateY(Math.PI)
     g.computeVertexNormals()
     return g
   }, [geos])
@@ -100,7 +102,7 @@ export function ProductCard({ print, glow: _glow }: { print: THREE.Texture | nul
       <mesh geometry={geos.panel} material={mats.face} receiveShadow />
       <mesh geometry={backPanel} material={mats.face} receiveShadow />
       {print && (
-        <mesh position={[0, 0, geos.faceZ + 0.02]} material={mats.ink}>
+        <mesh position={[0, 0, geos.faceZ + 0.003]} material={mats.ink}>
           <planeGeometry args={[plane.w, plane.h]} />
         </mesh>
       )}

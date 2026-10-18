@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CAPTURE_TABS } from "@/landing/sections/captures";
+import { CAPTURE_TABS } from "@/landing/sections/captureContent";
 import { OPEN_PARTS } from "@/landing/sections/open-parts";
 
 describe("revision 3 copy", () => {

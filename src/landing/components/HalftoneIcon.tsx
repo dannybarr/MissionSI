@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from "react";
-import type { CaptureId } from "@/landing/sections/captures";
+import type { CaptureId } from "@/landing/sections/captureContent";
 
 /**
  * Original object drawings, printed as a blue halftone.

@@ -4,8 +4,12 @@
  * landing page can import it without pulling the 3D chunk into the first paint.
  */
 export const pose = {
-  /** Y rotation in radians. π shows the blank back; π + 1260° shows the front. */
-  spin: Math.PI,
+  /** Front three-quarter presentation; rotations remain below a quarter turn. */
+  spin: 0.38,
+  pitch: -0.12,
+  connection: 0,
+  insertion: 0,
+  inspection: 0,
   tiltX: 0,
   tiltY: 0,
   /** 0 = hero framing, 1 = card settled in the tray. */
