@@ -1,24 +1,38 @@
-# Platform Replicator
+# Mission
 
-Act as a expert code migrator to replicate this platform and website exactly
+**Personal AI memory you own. Local, portable, never on anyone's cloud.**
 
-This project was built with [Lovable](https://lovable.dev).
+Mission is a dedicated graphite card that holds your personal AI memory: your work, health, habits, people, goals and preferences. Plug it into your laptop by USB-C and Claude, ChatGPT, Grok, Muse or any other agent can use your full context. Pull it out and their access ends instantly.
 
-## Build with Lovable
+A local AI on your laptop keeps that memory current from the signals in your life (calendar, location, fitness tracker, notes, email), acting as a private chief of staff. Over time the card itself will pick up its own signals, such as location, voice and NFC.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/9d4a29d4-86a8-4cc2-b693-08748cd595a5).
+This repository is the marketing site and Mission Studio for [amission.si](https://amission.si).
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## What's here
 
-## Development
+- **Landing site:** scroll-driven story of the card, from plugging into a laptop and agents connecting, to the card opening up to show its internals, and what Mission captures across Digital, Life and Health.
+- **Mission Studio:** an interactive designer where you build your own card and add hardware features such as NFC, location and microphone.
+- **Waitlist:** a serverless endpoint that stores sign-ups along with each Studio design.
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Stack
+
+TypeScript, React (TanStack Start on Vite), Tailwind, GSAP with ScrollTrigger, Lenis smooth scroll, and React Three Fiber for the 3D card. Deployed on Vercel.
+
+## Run locally
+
+Requires Node.js 20+ and npm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+git clone https://github.com/dannybarr/MissionSI.git
+cd MissionSI
+npm install
 npm run dev
 ```
+
+Other scripts: `npm run build`, `npm run preview`, `npm run lint`, `npm test`.
+
+## Status
+
+Pre-launch. The hardware shown on the site is a concept, and the final component layout is subject to engineering.
+
+© Mission. All rights reserved.
