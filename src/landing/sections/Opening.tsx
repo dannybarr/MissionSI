@@ -12,6 +12,7 @@ export function Opening({ reduced }: { reduced: boolean }) {
   const track = useRef<HTMLDivElement>(null)
   const copy = useRef<HTMLDivElement>(null)
   const trayCopy = useRef<HTMLDivElement>(null)
+  const meta = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -66,8 +67,11 @@ export function Opening({ reduced }: { reduced: boolean }) {
       Object.assign(pose, next)
       copyEl.style.opacity = String(next.copy)
       // Preserve the CSS centring translate on desktop and the top-aligned mobile layout.
-      copyEl.style.transform = `translateY(${-(1 - next.copy) * 18}px)`
+      // Copy drops away and softens as the card grows down into its space.
+      copyEl.style.transform = `translateY(${(1 - next.copy) * 70}px)`
+      copyEl.style.filter = next.copy < 1 ? `blur(${((1 - next.copy) * 6).toFixed(2)}px)` : ''
       copyEl.inert = next.copy < 0.05
+      if (meta.current) meta.current.style.opacity = String(Math.max(0, next.copy * 1.6 - 0.6))
       trayEl.style.opacity = String(next.trayCopy)
       trayEl.style.translate = `0 ${(1 - next.trayCopy) * 12}px`
       view.style.opacity = '1'
@@ -151,10 +155,10 @@ export function Opening({ reduced }: { reduced: boolean }) {
             In development · not taking orders
           </p>
           <h1 data-split="now" data-delay="0.25">
-            A personal AI memory, encrypted on a card you own.
+            A personal AI memory, encrypted on a card <em className="sheen">you own.</em>
           </h1>
           <p className="lede" data-reveal data-reveal-now data-delay="0.7">
-            Mission keeps what an agent should know about you on a card you carry. A USB-C cable connects it to your laptop, or it pairs to your phone. Disconnect, and future access stops. Nothing is stored in a Mission cloud.
+            Plug it in and every AI knows you. Unplug it and their access ends.
           </p>
           <div className="hero-actions" data-reveal="stagger" data-reveal-now data-delay="0.85">
             <Magnetic>
@@ -166,6 +170,8 @@ export function Opening({ reduced }: { reduced: boolean }) {
               See how it works
             </a>
           </div>
+        </div>
+        <div className="opening-meta" ref={meta}>
           <ul className="hero-specs" aria-label="Concept card">
             <li>
               <b>86 × 55 mm</b> graphite
@@ -178,6 +184,9 @@ export function Opening({ reduced }: { reduced: boolean }) {
             </li>
             <li className="hero-specs-note">Concept · not manufactured</li>
           </ul>
+          <span className="scroll-cue" aria-hidden="true">
+            Scroll <i />
+          </span>
         </div>
         <div className="opening-tray-copy" ref={trayCopy}>
           <p className="eyebrow">

@@ -31,6 +31,8 @@ export function useReveals(reduced: boolean) {
                 yPercent: 112,
                 rotation: 2.5,
                 transformOrigin: '0% 100%',
+                // Above-the-fold headlines also resolve out of a soft focus.
+                ...(immediate ? { filter: 'blur(12px)', clearProps: 'filter' } : {}),
                 duration: DUR.type,
                 ease: EASE.out,
                 stagger: 0.075,

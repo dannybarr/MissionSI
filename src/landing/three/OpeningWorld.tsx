@@ -323,6 +323,7 @@ export function OpeningScene() {
   const glow = useMemo(() => ({ v: 0.4 }), [])
   const blob = useMemo(() => blobTexture(), [])
   const ready = useRef(false)
+  const introStart = useRef(-1)
   useEffect(() => () => blob.dispose(), [blob])
 
   useFrame((state) => {
@@ -331,21 +332,30 @@ export function OpeningScene() {
     const height = size.height
     if (!camera || width < 2 || height < 2) return
     const mobile = width < 760
-    const fraction = mobile ? 0.76 : width < 1100 ? 0.38 : 0.37
     const aspect = width / height
+    // Desktop hero: a small card centred above the headline, sized off viewport height
+    // (about 22% of it) so the copy below always fits. Scrolling into inspection grows
+    // it to full product size and brings it to the centre.
+    const heroFraction = Math.min(0.3, (0.22 * height * (CARD.w / CARD.h)) / width)
+    const fraction = mobile ? 0.76 : THREE.MathUtils.lerp(heroFraction, 0.37, pose.inspection)
     const fov = 16
     const dist = CARD.w / (fraction * 2 * Math.tan((fov * Math.PI) / 360) * aspect)
     const visW = CARD.w / fraction
     const visH = visW / aspect
     const t = pose.cam
     const lay = t * t * (3 - 2 * t)
-    const cardX = mobile ? 0 : visW * 0.25
+    const cardX = 0
     const cardY = mobile ? 0 : 0.15
+    // Arrival: the card comes forward out of depth with a quarter turn, then floats.
+    if (introStart.current < 0) introStart.current = state.clock.elapsedTime
+    const ti = Math.min(1, (state.clock.elapsedTime - introStart.current - 0.15) / 2.4)
+    const intro = ti <= 0 ? 0 : 1 - Math.pow(2, -10 * ti)
+    const idle = 1 - pose.inspection
     const trayX = 3.4
     hero.set(cardX, cardY, 0)
     slot.set(trayX - 21.5, TRAY_Y + 0.28 + CARD.t / 2 + 0.012 + pose.settle, 0)
     const cardPos = hero.lerp(slot, lay)
-    look.set(THREE.MathUtils.lerp(0, cardX - (mobile ? 5.2 : 7.8), pose.connection), cardY + (mobile ? visH * 0.22 * (1 - pose.inspection) : 0), 0)
+    look.set(THREE.MathUtils.lerp(0, cardX - (mobile ? 5.2 : 7.8), pose.connection), cardY + (mobile ? visH * 0.22 : -visH * 0.21) * idle, 0)
     lookT.set(trayX - 8, TRAY_Y + (mobile ? -4.8 : 0.5), 0.2)
     look.lerp(lookT, t)
     const elev = THREE.MathUtils.lerp(0.07, 1.34, t)
@@ -360,9 +370,13 @@ export function OpeningScene() {
     const g = card.current
     if (tray.current) tray.current.position.y = TRAY_Y - 20 * (1 - lay)
     if (g) {
+      const e = state.clock.elapsedTime
+      const away = (1 - intro) * (1 - lay)
       g.position.copy(cardPos)
+      g.position.y += Math.sin(e * 0.9) * 0.07 * idle * intro - away * 1.2
+      g.position.z -= away * 22
       g.rotation.order = 'YXZ'
-      g.rotation.y = (pose.spin + pose.tiltY) * (1 - lay)
+      g.rotation.y = (pose.spin + pose.tiltY + Math.sin(e * 0.45) * 0.035 * idle - away * 1.4) * (1 - lay)
       g.rotation.x = (pose.pitch + pose.tiltX) * (1 - lay) - (Math.PI / 2) * lay
       // In-plane yaw keeps the card flat at contact, rather than burying one edge.
       g.rotation.z = -0.04 * (1 - lay) - 0.14 * lay
@@ -378,7 +392,7 @@ export function OpeningScene() {
       const facing = Math.abs(Math.cos(pose.spin))
       shade.position.set(cardPos.x + 0.7 * (1 - lay), cardPos.y - (2.15 + facing * 0.45) * (1 - lay), -0.9)
       shade.scale.set(3.1 + facing * 2.8 + t * 1.5, 1.15 + facing * 2.1 + t * 0.7, 1)
-      shadeMat.opacity = (0.26 + facing * 0.19) * (1 - pose.cam * 0.55)
+      shadeMat.opacity = (0.26 + facing * 0.19) * (1 - pose.cam * 0.55) * Math.max(intro, pose.cam)
       shade.visible = t < 0.97
     }
     const heroIdle = t < 0.2 && pose.spinning < 0.5

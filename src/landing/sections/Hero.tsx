@@ -89,7 +89,7 @@ export function Hero({ reduced }: { reduced: boolean }) {
           A personal AI memory, encrypted on a card you own.
         </h1>
         <p className="lede" data-reveal data-reveal-now data-delay="0.7">
-          Mission keeps what an agent should know about you on a card you carry. A USB-C cable connects it to your laptop, or it pairs to your phone. Disconnect, and future access stops. Nothing is stored in a Mission cloud.
+          Plug it in and every AI knows you. Unplug it and their access ends.
         </p>
         <div className="hero-actions" data-reveal="stagger" data-reveal-now data-delay="0.85">
           <Magnetic>

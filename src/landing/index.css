@@ -30,6 +30,7 @@
   --radius: 22px;
   --grain-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23d)'/%3E%3C/svg%3E");
   --grain-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -1 0 0 0 0.5'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23l)'/%3E%3C/svg%3E");
+  --grain-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1100' height='1100'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0035' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.43 0 0 0 0 0.46 0 0 0 -2.4 1.45'/%3E%3C/filter%3E%3Crect width='1100' height='1100' filter='url(%23m)'/%3E%3C/svg%3E");
   background-color: var(--paper);
   background-image: linear-gradient(rgb(14 15 16 / var(--connect-dark, 0)), rgb(14 15 16 / var(--connect-dark, 0))), var(--grey-surface);
   background-size: 100% 100%;
@@ -131,10 +132,35 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .opening { background: transparent; }
 .opening-pin { position: relative; height: 100svh; }
 .opening-view { position: absolute; inset: 0; }
+/* Centred stack: the card sits above (positioned in 3D at ~29% of viewport height), copy below. */
 .opening-copy {
-  position: absolute; z-index: 2; left: var(--gutter); top: 50%; width: min(540px, 40vw);
-  translate: 0 -50%; pointer-events: none;
+  position: absolute; z-index: 2; left: 50%; top: 45svh; width: min(980px, calc(100vw - 2 * var(--gutter)));
+  translate: -50% 0; pointer-events: none; text-align: center;
 }
+.opening-copy .eyebrow { justify-content: center; margin-bottom: 18px; }
+.opening h1 { font-size: clamp(40px, min(4.7vw, 7.6svh), 84px); max-width: 17ch; margin: 0 auto 20px; line-height: 0.92; }
+.opening .lede { margin-inline: auto; max-width: 30em; font-size: clamp(17px, 1.4vw, 22px); line-height: 1.35; }
+.opening .hero-actions { justify-content: center; margin-top: clamp(22px, 3.6svh, 34px); }
+.opening h1 em { font-style: normal; }
+/* A slow light sweep across the payoff words. */
+.sheen {
+  background: linear-gradient(100deg, var(--ink) 0%, var(--ink) 38%, #8a93a6 48%, #e9eef8 50%, #8a93a6 52%, var(--ink) 62%, var(--ink) 100%);
+  background-size: 300% 100%; background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  animation: sheen 7s 2.4s var(--ease-io) infinite;
+}
+@keyframes sheen { 0% { background-position: 100% 0; } 38%, 100% { background-position: 0% 0; } }
+.opening-meta {
+  position: absolute; z-index: 2; left: var(--gutter); right: var(--gutter); bottom: clamp(18px, 3.4svh, 34px);
+  display: flex; align-items: flex-end; justify-content: space-between; pointer-events: none;
+  animation: m-fade 1.2s 1.6s var(--ease) both;
+}
+.opening-meta .hero-specs { margin: 0; gap: 4px 18px; font-size: 13px; }
+.scroll-cue { display: inline-flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
+.scroll-cue i { position: relative; width: 1px; height: 38px; background: var(--line-2); overflow: hidden; }
+.scroll-cue i::after { content: ''; position: absolute; left: 0; top: 0; width: 1px; height: 40%; background: var(--ink); animation: cue 2.2s var(--ease-io) infinite; }
+@keyframes cue { 0% { transform: translateY(-100%); } 100% { transform: translateY(260%); } }
+@keyframes m-fade { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
 .opening-copy a, .opening-copy button { pointer-events: auto; }
 .opening-tray-copy {
   position: absolute; z-index: 2; left: var(--gutter); bottom: 11vh; width: min(420px, 34vw);
@@ -143,16 +169,17 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .opening-tray-copy h2 { font-size: clamp(36px, 3.6vw, 60px); font-weight: 500; letter-spacing: -0.045em; line-height: 0.98; margin: 0 0 14px; }
 .opening-tray-copy p { margin: 0; color: var(--ink-soft); max-width: 28em; }
 .opening-fallback {
-  position: absolute; z-index: 2; right: 7vw; top: 50%; width: min(34vw, 480px);
-  translate: 0 -50%; pointer-events: none; transition: opacity 0.7s var(--ease);
+  position: absolute; z-index: 2; left: 50%; top: 29svh; width: min(34svh, 30vw);
+  translate: -50% -50%; pointer-events: none; transition: opacity 0.7s var(--ease);
 }
+/* The flat poster only appears if WebGL is slow or missing, so it never doubles the 3D arrival. */
+.opening:not(.is-ready) .opening-fallback { opacity: 0; animation: m-fade 0.8s 2.6s var(--ease) forwards; }
 .opening.is-ready .opening-fallback { opacity: 0; }
 .opening-connection-caption { position: absolute; z-index: 2; left: var(--gutter); bottom: 6vh; margin: 0; font-size: clamp(22px, 2.6vw, 38px); line-height: 1.15; letter-spacing: -0.035em; opacity: var(--connection-caption, 0); pointer-events: none; }
 .opening-connection-caption { color: #f4f4f4; }
 .opening-connection-caption span { color: rgba(244, 244, 244, 0.72); }
 .opening .opening-connection-caption span { color: rgba(244, 244, 244, 0.72); }
 .opening-connection-caption span { color: var(--ink-soft); }
-.mission-site .site-grain { opacity: .35; }
 
 /* ---------- statement ---------- */
 .statement { background: var(--paper); }
@@ -702,7 +729,6 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 
 /* The cool grey tonal falloff is visible across every light chapter. */
 body:has(.mission-site) { background-color: #e7e7e7; }
-.mission-site .site-grain-wash { background: #777; opacity: 0.035; }
 .statement, .how, .teaser, .faq, .close, .site-footer, .tray {
   background-color: var(--paper);
   background-image: var(--grey-surface);
@@ -769,11 +795,31 @@ body:has(.mission-site) { background-color: #e7e7e7; }
 
 /* ---------- site grain: ghost.ai data-site-texture ---------- */
 body:has(.mission-site) { background-color: #e7e7e7; }
-.site-grain { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
-.site-grain-wash { position: absolute; inset: 0; background: #686868; opacity: 0.06; }
-.site-grain-dark, .site-grain-light { position: absolute; inset: 0; background-size: 200px 200px; opacity: 0.3; }
-.site-grain-dark { background-image: var(--grain-dark); }
-.site-grain-light { background-image: var(--grain-light); }
+/* Three scales of texture: soft tonal clouds, a cursor-following sheen, and a fine
+   film grain that re-seeds a few times a second so it reads as a material, not a filter. */
+.site-grain { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+.site-grain-wash {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(560px circle at var(--mx, 12%) var(--my, 18%), rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.07) 100%);
+  mix-blend-mode: soft-light; transition: opacity 0.6s;
+}
+.site-grain-mottle {
+  position: absolute; inset: -20%; background-image: var(--grain-mottle); background-size: 100% 100%; background-repeat: no-repeat;
+  opacity: 0.16; mix-blend-mode: multiply; animation: mottle 90s linear infinite alternate;
+}
+.site-grain-dark, .site-grain-light { position: absolute; inset: -120px; background-size: 180px 180px; animation: grain 0.9s steps(6) infinite; }
+.site-grain-dark { background-image: var(--grain-dark); opacity: 0.42; }
+.site-grain-light { background-image: var(--grain-light); opacity: 0.12; animation-delay: -0.45s; }
+@keyframes grain {
+  0% { transform: translate(0, 0); } 17% { transform: translate(-47px, 31px); } 33% { transform: translate(38px, -62px); }
+  50% { transform: translate(-81px, -17px); } 67% { transform: translate(64px, 52px); } 83% { transform: translate(-22px, 88px); } 100% { transform: translate(0, 0); }
+}
+@keyframes mottle { from { transform: translate(0, 0) scale(1); } to { transform: translate(-6%, 4%) scale(1.08); } }
+.mission-site.reduced .site-grain-dark, .mission-site.reduced .site-grain-light, .mission-site.reduced .site-grain-mottle { animation: none; }
+@media (prefers-reduced-motion: reduce) { .site-grain * { animation: none !important; } }
+@media (max-width: 760px) { .site-grain-mottle { animation: none; } .opening-meta { display: none; } }
 @media (max-width: 1180px) { .site-nav nav { gap: 16px; } }
 
 /* ---------- inside: shell splits, callouts, strip ---------- */

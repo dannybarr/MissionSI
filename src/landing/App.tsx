@@ -69,6 +69,36 @@ function Nav() {
   )
 }
 
+/** The soft sheen in the grain layer trails the pointer, eased so it drifts rather than snaps. */
+function useGrainLight(reduced: boolean) {
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>('.site-grain')
+    if (!el || reduced || !window.matchMedia('(pointer: fine)').matches) return
+    let x = window.innerWidth / 2
+    let y = window.innerHeight * 0.3
+    let tx = x
+    let ty = y
+    let raf = 0
+    const tick = () => {
+      x += (tx - x) * 0.08
+      y += (ty - y) * 0.08
+      el.style.setProperty('--mx', `${x.toFixed(1)}px`)
+      el.style.setProperty('--my', `${y.toFixed(1)}px`)
+      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.5 ? requestAnimationFrame(tick) : 0
+    }
+    const onMove = (e: PointerEvent) => {
+      tx = e.clientX
+      ty = e.clientY
+      if (!raf) raf = requestAnimationFrame(tick)
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      cancelAnimationFrame(raf)
+    }
+  }, [reduced])
+}
+
 export default function LandingApp() {
   const [reduced, setReduced] = useState(false)
   // Layout, not passive: ScrollTrigger pins wrap sections, and a later passive
@@ -84,10 +114,12 @@ export default function LandingApp() {
   }, [])
   useLandingScroll(reduced)
   useReveals(reduced)
+  useGrainLight(reduced)
 
   return (
     <div className={`mission-site ${reduced ? 'reduced' : ''}`}>
       <div className="site-grain" data-site-texture="true" aria-hidden="true">
+        <div className="site-grain-mottle" />
         <div className="site-grain-wash" />
         <div className="site-grain-dark" />
         <div className="site-grain-light" />
