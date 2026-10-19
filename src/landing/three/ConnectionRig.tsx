@@ -30,9 +30,9 @@ export function ConnectionRig() {
         const dark = Math.max(pixels.data[i], pixels.data[i + 1], pixels.data[i + 2])
         if (dark < 16) pixels.data[i + 3] = Math.round(pixels.data[i + 3] * Math.max(0, (dark - 3) / 13))
         if (dark >= 16) {
-          pixels.data[i] = Math.min(255, pixels.data[i] * 1.35 + 8)
-          pixels.data[i + 1] = Math.min(255, pixels.data[i + 1] * 1.35 + 8)
-          pixels.data[i + 2] = Math.min(255, pixels.data[i + 2] * 1.35 + 8)
+          pixels.data[i] = Math.min(255, 255 * (pixels.data[i] / 255) ** 0.7 + 5)
+          pixels.data[i + 1] = Math.min(255, 255 * (pixels.data[i + 1] / 255) ** 0.7 + 5)
+          pixels.data[i + 2] = Math.min(255, 255 * (pixels.data[i + 2] / 255) ** 0.7 + 5)
         }
       }
       ctx.putImageData(pixels, 0, 0)
