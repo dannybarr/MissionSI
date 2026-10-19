@@ -90,7 +90,7 @@ export function Footer() {
     <footer className="site-footer">
       <div>
         <strong>Mission</strong>
-        <p>amission.si. A personal AI memory you own. In development. Nothing has shipped. No orders, no accounts, no tracking on this page.</p>
+        <p>amission.si. A personal AI memory you own. No accounts, no tracking on this page.</p>
       </div>
       <div>
         <strong>Imagery</strong>

@@ -35,7 +35,7 @@ function useArtTexture() {
     earth.src = '/assets/nasa/earth.webp'
     const off = subscribeTeaserArt(draw)
     setEtchReady(draw)
-    document.fonts?.load('500 64px Handjet').then(draw).catch(() => {})
+    document.fonts?.load('400 64px Geist').then(draw).catch(() => {})
     draw()
     return () => {
       live = false

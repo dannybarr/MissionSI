@@ -33,23 +33,23 @@ export function ProductCard({ print, glow: _glow }: { print: THREE.Texture | nul
   const mats = useMemo(() => {
     const rough = beadTexture()
     const body = new THREE.MeshPhysicalMaterial({
-      color: '#424449',
-      metalness: 0.78,
-      roughness: 0.48,
+      color: '#56585c',
+      metalness: 0.62,
+      roughness: 0.56,
       roughnessMap: rough,
       bumpMap: rough,
-      bumpScale: 0.002,
+      bumpScale: 0.004,
       envMapIntensity: 0.85,
       clearcoat: 0.06,
       clearcoatRoughness: 0.42,
     })
     const face = new THREE.MeshPhysicalMaterial({
-      color: '#242629',
-      metalness: 0.45,
-      roughness: 0.66,
+      color: '#2b2d30',
+      metalness: 0.35,
+      roughness: 0.8,
       roughnessMap: rough,
       bumpMap: rough,
-      bumpScale: 0.0015,
+      bumpScale: 0.003,
       envMapIntensity: 0.5,
     })
     const ink = new THREE.MeshStandardMaterial({

@@ -139,13 +139,13 @@ export function CardFace({ alt = 'Mission card: graphite, inward-cut edges, Eart
         {marks && (
           <g className="card-marks">
             <image href="/assets/nasa/earth-240.webp" x="673" y="67" width="112" height="112" clipPath={`url(#${id('earth')})`} preserveAspectRatio="xMidYMid slice" />
-            <text x="210" y="148" textAnchor="middle" fill="#c8c9cd" fontFamily="Handjet, system-ui, sans-serif" fontSize="52" fontWeight="500">
+            <text x="92" y="140" textAnchor="start" fill="#b0b2b7" fontFamily="Geist, 'Helvetica Neue', Arial, sans-serif" fontSize="56" fontWeight="400" letterSpacing="-1">
               Mission
             </text>
-            <text x="725" y="440" textAnchor="middle" fill="#c4c5c9" fontFamily="Handjet, system-ui, sans-serif" fontSize="62" fontWeight="500">
+            <text x="772" y="452" textAnchor="end" fill="#a8aaaf" fontFamily="Geist, 'Helvetica Neue', Arial, sans-serif" fontSize="58" fontWeight="400">
               DB
             </text>
-            <text x="725" y="492" textAnchor="middle" fill="#8d8e93" fontFamily="Handjet, system-ui, sans-serif" fontSize="12" letterSpacing="3.2">
+            <text x="772" y="492" textAnchor="end" fill="#8d8e93" fontFamily="Geist, 'Helvetica Neue', Arial, sans-serif" fontSize="10" letterSpacing="2.6">
               MS-01
             </text>
           </g>

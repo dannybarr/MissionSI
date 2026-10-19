@@ -10,7 +10,7 @@ const FACTS = [
   { k: 'Per agent', d: 'You grant what each session may read. The rest stays on the card.' },
   { k: 'A local log', d: 'Grants, refusals and shares are written where you can read them.' },
   { k: '£249', d: 'Founding target for the custom card. No orders, deposits or ship date.' },
-  { k: 'Honest', d: 'Software v1 is in development. The demo on this page is a simulation.' },
+  { k: 'Open protocol', d: 'Built on MCP, so new agents can connect without new hardware.' },
 ]
 
 export function Statement({ reduced }: { reduced: boolean }) {

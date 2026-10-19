@@ -46,48 +46,277 @@ function beadTexture() {
   return tex;
 }
 
+/** Board is 7.28 × 4.48 cm. Major parts as [x, y, w, h] footprints, card centre origin. */
+const BOARD = { w: 7.28, h: 4.48 };
+const LAYOUT: Record<PartId | "pmic", [number, number, number, number]> = {
+  nfc: [-2.45, 1.28, 1.95, 1.45],
+  gnss: [-2.6, -0.25, 1.0, 1.0],
+  mic: [-1.05, -0.3, 0.46, 0.46],
+  haptics: [-2.45, -1.55, 0.95, 0.95],
+  flash: [0.15, 1.28, 1.55, 1.12],
+  bluetooth: [2.3, 1.3, 1.5, 0.8],
+  processor: [1.75, -0.1, 1.1, 1.1],
+  battery: [0.95, -1.45, 3.9, 1.18],
+  usbc: [-3.55, 0, 0.3, 0.9],
+  pmic: [0.25, -0.15, 0.5, 0.5],
+};
+
+function rand(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function inPart(x: number, y: number, pad: number) {
+  for (const [cx, cy, w, h] of Object.values(LAYOUT)) {
+    if (Math.abs(x - cx) < w / 2 + pad && Math.abs(y - cy) < h / 2 + pad) return true;
+  }
+  return Math.abs(x) > BOARD.w / 2 - 0.12 || Math.abs(y) > BOARD.h / 2 - 0.12;
+}
+
+/** Matte black solder mask, gold routing with 45° bends, vias, pads and white silkscreen. */
 function pcbTexture() {
+  const W = 2048;
+  const H = Math.round((W * BOARD.h) / BOARD.w);
   const c = document.createElement("canvas");
-  c.width = 1024;
-  c.height = 640;
+  c.width = W;
+  c.height = H;
   const g = c.getContext("2d")!;
-  g.fillStyle = "#17202b";
-  g.fillRect(0, 0, 1024, 640);
-  g.strokeStyle = "#8d6438";
-  g.lineWidth = 3;
+  const px = (x: number) => ((x + BOARD.w / 2) / BOARD.w) * W;
+  const py = (y: number) => (1 - (y + BOARD.h / 2) / BOARD.h) * H;
+  const k = W / BOARD.w;
+  const r = rand(4242);
+
+  g.fillStyle = "#131416";
+  g.fillRect(0, 0, W, H);
+  const noise = g.getImageData(0, 0, W, H);
+  for (let i = 0; i < noise.data.length; i += 4) {
+    const n = (r() - 0.5) * 7;
+    noise.data[i] = noise.data[i]! + n;
+    noise.data[i + 1] = noise.data[i + 1]! + n;
+    noise.data[i + 2] = noise.data[i + 2]! + n + 1;
+  }
+  g.putImageData(noise, 0, 0);
+
+  // Copper pours under the mask: faint, slightly lighter regions.
+  g.fillStyle = "rgba(60, 52, 36, 0.18)";
+  for (let i = 0; i < 9; i++) g.fillRect(r() * W, r() * H, 120 + r() * 360, 80 + r() * 200);
+
+  // Traces: Manhattan routes with chamfered corners, in bundles.
   g.lineCap = "round";
   g.lineJoin = "round";
-  const lines = [
-    [120, 140, 420, 140, 420, 300, 700, 300],
-    [180, 420, 520, 420, 520, 220],
-    [260, 200, 260, 480, 640, 480],
-    [760, 160, 900, 160, 900, 360, 700, 360],
-    [140, 520, 400, 520, 400, 360],
-  ];
-  for (const pts of lines) {
+  for (let b = 0; b < 46; b++) {
+    const lanes = 2 + Math.floor(r() * 5);
+    let x = r() * W;
+    let y = r() * H;
+    const pts: [number, number][] = [[x, y]];
+    for (let s = 0; s < 3 + Math.floor(r() * 3); s++) {
+      const len = 60 + r() * 380;
+      const dir = Math.floor(r() * 4);
+      const diag = 18 + r() * 30;
+      if (dir === 0) x += len;
+      else if (dir === 1) x -= len;
+      else if (dir === 2) y += len * 0.6;
+      else y -= len * 0.6;
+      x += (r() - 0.5) * diag;
+      pts.push([x, y]);
+    }
+    const width = r() < 0.2 ? 6 : 2.6;
+    for (let l = 0; l < lanes; l++) {
+      g.strokeStyle = `rgba(${176 + r() * 20}, ${134 + r() * 16}, ${66 + r() * 12}, ${0.55 + r() * 0.3})`;
+      g.lineWidth = width;
+      g.beginPath();
+      pts.forEach(([a, bb], i) => (i ? g.lineTo(a + l * 9, bb + l * 9) : g.moveTo(a + l * 9, bb + l * 9)));
+      g.stroke();
+    }
+    // Via at each route end.
+    const [ex, ey] = pts[pts.length - 1]!;
+    g.fillStyle = "#c9a35b";
     g.beginPath();
-    g.moveTo(pts[0]!, pts[1]!);
-    for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i]!, pts[i + 1]!);
-    g.stroke();
-  }
-  g.fillStyle = "#c6a15a";
-  for (const [x, y] of [
-    [300, 150],
-    [250, 280],
-    [160, 360],
-    [430, 150],
-    [700, 170],
-    [760, 430],
-    [500, 470],
-  ]) {
+    g.arc(ex, ey, 7, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#0b0b0c";
     g.beginPath();
-    g.arc(x!, y!, 7, 0, Math.PI * 2);
+    g.arc(ex, ey, 3, 0, Math.PI * 2);
     g.fill();
   }
+
+  // Scattered vias.
+  for (let i = 0; i < 260; i++) {
+    const x = r() * W;
+    const y = r() * H;
+    g.fillStyle = "rgba(201, 163, 91, 0.9)";
+    g.beginPath();
+    g.arc(x, y, 4.5, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#0b0b0c";
+    g.beginPath();
+    g.arc(x, y, 1.8, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  // Pad rings and silkscreen outlines around every major part.
+  g.font = `600 ${Math.round(k * 0.085)}px "Geist Mono", monospace`;
+  let n = 1;
+  for (const [id, [cx, cy, w, h]] of Object.entries(LAYOUT)) {
+    if (id === "battery") continue;
+    const x0 = px(cx - w / 2) - 10;
+    const y0 = py(cy + h / 2) - 10;
+    const ww = w * k + 20;
+    const hh = h * k + 20;
+    g.fillStyle = "rgba(196, 160, 92, 0.85)";
+    const pads = Math.max(4, Math.round(w * 9));
+    for (let i = 0; i < pads; i++) {
+      g.fillRect(x0 + 14 + ((ww - 28) * i) / (pads - 1) - 3, y0 - 6, 6, 12);
+      g.fillRect(x0 + 14 + ((ww - 28) * i) / (pads - 1) - 3, y0 + hh - 6, 6, 12);
+    }
+    g.strokeStyle = "rgba(235, 235, 230, 0.75)";
+    g.lineWidth = 2.4;
+    g.strokeRect(x0 - 8, y0 - 14, ww + 16, hh + 28);
+    g.fillStyle = "rgba(235, 235, 230, 0.8)";
+    g.fillText(`U${n++}`, x0 - 6, y0 - 22);
+  }
+  g.fillText("MISSION MS-01  REV C", px(-0.4), py(-2.1));
+  g.fillText("DB  2026", px(2.6), py(-2.1));
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+/** Laser marking on an IC top: low-contrast grey type on black epoxy. */
+function chipTexture(lines: string[], seed: number) {
+  const c = document.createElement("canvas");
+  c.width = 512;
+  c.height = 384;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#151517";
+  g.fillRect(0, 0, 512, 384);
+  const r = rand(seed);
+  const img = g.getImageData(0, 0, 512, 384);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = (r() - 0.5) * 10;
+    img.data[i] = img.data[i]! + v;
+    img.data[i + 1] = img.data[i + 1]! + v;
+    img.data[i + 2] = img.data[i + 2]! + v;
+  }
+  g.putImageData(img, 0, 0);
+  g.fillStyle = "rgba(150, 152, 156, 0.85)";
+  g.font = '600 52px "Geist Mono", monospace';
+  lines.forEach((t, i) => g.fillText(t, 54, 140 + i * 66));
+  g.beginPath();
+  g.arc(44, 44, 12, 0, Math.PI * 2);
+  g.fillStyle = "rgba(120, 122, 126, 0.7)";
+  g.fill();
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
   return tex;
+}
+
+/** A flat rounded-rectangle spiral coil, as etched copper. */
+function coilGeometry(w: number, h: number, turns: number, pitch: number, trace: number) {
+  const shapes: THREE.Shape[] = [];
+  const rr = (s: THREE.Path, ww: number, hh: number, rad: number, reverse: boolean) => {
+    const pts: THREE.Vector2[] = [];
+    const corner = (cx: number, cy: number, a0: number) => {
+      for (let i = 0; i <= 6; i++) {
+        const a = a0 + (Math.PI / 2) * (i / 6);
+        pts.push(new THREE.Vector2(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad));
+      }
+    };
+    corner(ww / 2 - rad, hh / 2 - rad, 0);
+    corner(-ww / 2 + rad, hh / 2 - rad, Math.PI / 2);
+    corner(-ww / 2 + rad, -hh / 2 + rad, Math.PI);
+    corner(ww / 2 - rad, -hh / 2 + rad, Math.PI * 1.5);
+    if (reverse) pts.reverse();
+    s.setFromPoints(pts);
+  };
+  for (let t = 0; t < turns; t++) {
+    const ow = w - t * pitch * 2;
+    const oh = h - t * pitch * 2;
+    const rad = Math.max(0.04, 0.22 - t * 0.03);
+    const outer = new THREE.Shape();
+    rr(outer, ow, oh, rad, false);
+    const hole = new THREE.Path();
+    rr(hole, ow - trace * 2, oh - trace * 2, Math.max(0.02, rad - trace), true);
+    outer.holes.push(hole);
+    shapes.push(outer);
+  }
+  return new THREE.ExtrudeGeometry(shapes, { depth: 0.012, bevelEnabled: false, curveSegments: 4 });
+}
+
+/** Hundreds of 0402 and 0603 passives: the detail that makes a board read as real. */
+function Passives({ body, cap, cap2 }: { body: THREE.Material; cap: THREE.Material; cap2: THREE.Material }) {
+  const data = useMemo(() => {
+    const r = rand(77);
+    const items: { x: number; y: number; rot: number; big: boolean; dark: boolean }[] = [];
+    let tries = 0;
+    while (items.length < 150 && tries++ < 6000) {
+      const x = (r() - 0.5) * BOARD.w;
+      const y = (r() - 0.5) * BOARD.h;
+      if (inPart(x, y, 0.1)) continue;
+      if (items.some((p) => Math.abs(p.x - x) < 0.13 && Math.abs(p.y - y) < 0.1)) continue;
+      items.push({ x, y, rot: r() < 0.7 ? 0 : Math.PI / 2, big: r() < 0.3, dark: r() < 0.35 });
+    }
+    return items;
+  }, []);
+  const tan = useRef<THREE.InstancedMesh>(null);
+  const black = useRef<THREE.InstancedMesh>(null);
+  const ends = useRef<THREE.InstancedMesh>(null);
+  useEffect(() => {
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const e = new THREE.Euler();
+    const v = new THREE.Vector3();
+    const s = new THREE.Vector3();
+    let ti = 0;
+    let bi = 0;
+    let ei = 0;
+    for (const p of data) {
+      const L = p.big ? 0.16 : 0.1;
+      const Wd = p.big ? 0.08 : 0.05;
+      e.set(0, 0, p.rot);
+      q.setFromEuler(e);
+      s.set(L * 0.62, Wd, Wd * 0.8);
+      v.set(p.x, p.y, Wd * 0.4);
+      m.compose(v, q, s);
+      if (p.dark) black.current?.setMatrixAt(bi++, m);
+      else tan.current?.setMatrixAt(ti++, m);
+      for (const side of [-1, 1]) {
+        const dx = Math.cos(p.rot) * side * L * 0.4;
+        const dy = Math.sin(p.rot) * side * L * 0.4;
+        s.set(L * 0.2, Wd * 1.02, Wd * 0.84);
+        v.set(p.x + dx, p.y + dy, Wd * 0.42);
+        m.compose(v, q, s);
+        ends.current?.setMatrixAt(ei++, m);
+      }
+    }
+    if (tan.current) {
+      tan.current.count = ti;
+      tan.current.instanceMatrix.needsUpdate = true;
+    }
+    if (black.current) {
+      black.current.count = bi;
+      black.current.instanceMatrix.needsUpdate = true;
+    }
+    if (ends.current) {
+      ends.current.count = ei;
+      ends.current.instanceMatrix.needsUpdate = true;
+    }
+  }, [data]);
+  const box = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  useEffect(() => () => box.dispose(), [box]);
+  return (
+    <group position={[0, 0, 0.02]}>
+      <instancedMesh ref={tan} args={[box, body, data.length]} />
+      <instancedMesh ref={black} args={[box, cap2, data.length]} />
+      <instancedMesh ref={ends} args={[box, cap, data.length * 2]} />
+    </group>
+  );
 }
 
 function StudioEnv() {
@@ -131,7 +360,7 @@ function usePrint() {
     img.onload = () => live && draw(img);
     img.src = "/assets/nasa/earth-240.webp";
     document.fonts
-      ?.load("500 64px Handjet")
+      ?.load("400 64px Geist")
       .then(() => live && img.complete && draw(img))
       .catch(() => {});
     return () => {
@@ -151,6 +380,8 @@ export function ExplodedScene() {
   const parts = useRef<Partial<Record<PartId, THREE.Object3D | null>>>({});
   const ready = useRef(false);
   const geos = useMemo(() => cardGeometries(), []);
+  const coil = useMemo(() => coilGeometry(LAYOUT.nfc[2] - 0.12, LAYOUT.nfc[3] - 0.12, 7, 0.075, 0.042), []);
+  useEffect(() => () => coil.dispose(), [coil]);
   const print = usePrint();
   const plane = printPlaneSize();
 
@@ -158,9 +389,9 @@ export function ExplodedScene() {
     const rough = beadTexture();
     const pcb = pcbTexture();
     const body = new THREE.MeshPhysicalMaterial({
-      color: "#2c2e33",
-      metalness: 0.92,
-      roughness: 0.46,
+      color: "#56585c",
+      metalness: 0.62,
+      roughness: 0.56,
       roughnessMap: rough,
       bumpMap: rough,
       bumpScale: 0.01,
@@ -169,9 +400,9 @@ export function ExplodedScene() {
       clearcoatRoughness: 0.42,
     });
     const faceMat = new THREE.MeshPhysicalMaterial({
-      color: "#121416",
-      metalness: 1,
-      roughness: 0.82,
+      color: "#2b2d30",
+      metalness: 0.35,
+      roughness: 0.8,
       roughnessMap: rough,
       bumpMap: rough,
       bumpScale: 0.008,
@@ -241,9 +472,41 @@ export function ExplodedScene() {
       metalness: 0.35,
       roughness: 0.48,
     });
-    const boardMat = new THREE.MeshStandardMaterial({ map: pcb, roughness: 0.78, metalness: 0.18 });
-    const boardEdge = new THREE.MeshStandardMaterial({ color: "#10161e", roughness: 0.9 });
+    const boardMat = new THREE.MeshPhysicalMaterial({
+      map: pcb,
+      roughness: 0.55,
+      metalness: 0.1,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.5,
+    });
+    const boardEdge = new THREE.MeshStandardMaterial({ color: "#1b1a16", roughness: 0.85 });
+    const capTan = new THREE.MeshStandardMaterial({ color: "#8f7556", roughness: 0.6 });
+    const capEnd = new THREE.MeshStandardMaterial({ color: "#d9dadc", metalness: 0.9, roughness: 0.3 });
+    const resBlack = new THREE.MeshStandardMaterial({ color: "#121212", roughness: 0.55 });
+    const ferrite = new THREE.MeshStandardMaterial({ color: "#1c1c1e", roughness: 0.9 });
+    const chipFlash = new THREE.MeshStandardMaterial({
+      map: chipTexture(["MSN-F1", "2614 A7"], 11),
+      roughness: 0.62,
+      metalness: 0.1,
+    });
+    const chipCpu = new THREE.MeshStandardMaterial({
+      map: chipTexture(["MSN-C1", "ARM 26"], 23),
+      roughness: 0.62,
+      metalness: 0.1,
+    });
+    const chipSmall = new THREE.MeshStandardMaterial({
+      map: chipTexture(["PM1", "X2"], 31),
+      roughness: 0.62,
+      metalness: 0.1,
+    });
     return {
+      capTan,
+      capEnd,
+      resBlack,
+      ferrite,
+      chipFlash,
+      chipCpu,
+      chipSmall,
       rough,
       pcb,
       body,
@@ -292,6 +555,10 @@ export function ExplodedScene() {
       a.kapton.dispose();
       a.boardMat.dispose();
       a.boardEdge.dispose();
+      for (const m of [a.capTan, a.capEnd, a.resBlack, a.ferrite, a.chipFlash, a.chipCpu, a.chipSmall]) {
+        m.map?.dispose();
+        m.dispose();
+      }
       a.rough.dispose();
       a.pcb.dispose();
     };
@@ -324,12 +591,12 @@ export function ExplodedScene() {
     const open = smooth(Math.min(1, explodePose.p / 0.42));
     // Shells have to clear the board, then the whole assembly scales down so the
     // side callouts stay on the creme instead of sitting on the graphite.
-    const spread = (mobile ? 8.4 : 9.2) * open;
-    const scale = THREE.MathUtils.lerp(mobile ? 0.92 : 1, mobile ? 0.58 : 0.5, open);
+    const spread = (mobile ? 8.4 : 8.9) * open;
+    const scale = THREE.MathUtils.lerp(mobile ? 0.8 : 0.6, mobile ? 0.56 : 0.52, open);
     root.current.scale.setScalar(scale);
-    root.current.position.x = THREE.MathUtils.lerp(mobile ? 0 : 1.15, 0, open);
+    root.current.position.x = THREE.MathUtils.lerp(mobile ? 0 : 3.1, mobile ? 0 : 0.9, open);
     root.current.rotation.order = "YXZ";
-    root.current.rotation.y = THREE.MathUtils.lerp(mobile ? -0.4 : -0.62, -0.02, open);
+    root.current.rotation.y = THREE.MathUtils.lerp(mobile ? -0.4 : -0.78, -0.12, open);
     root.current.rotation.x = THREE.MathUtils.lerp(-0.38, mobile ? -0.7 : -0.58, open);
     shell.current.position.set(-spread, -0.04 * open, 0.15 * open);
     shell.current.rotation.y = 0.72 * open;
@@ -340,7 +607,7 @@ export function ExplodedScene() {
     const reveal = smooth(Math.min(1, Math.max(0, (open - 0.05) / 0.55)));
     board.current.visible = open > 0.04;
     board.current.position.z = 0.2 * open;
-    board.current.scale.setScalar(0.9 + 0.1 * reveal);
+    board.current.scale.setScalar(0.92 + 0.2 * reveal);
     const dist = THREE.MathUtils.lerp(mobile ? 14 : 17.5, mobile ? 16 : 26, open);
     camera.position.set(0, dist * 0.2, dist);
     camera.lookAt(0, -0.15, 0);
@@ -392,87 +659,121 @@ export function ExplodedScene() {
         </group>
         <group ref={board}>
           <mesh position={[0, 0, -0.03]} material={assets.boardEdge}>
-            <boxGeometry args={[7.4, 4.6, 0.06]} />
+            <boxGeometry args={[BOARD.w + 0.06, BOARD.h + 0.06, 0.06]} />
           </mesh>
-          <mesh position={[0, 0, 0.02]} material={assets.boardMat}>
-            <planeGeometry args={[7.28, 4.48]} />
+          <mesh position={[0, 0, 0.002]} material={assets.boardMat}>
+            <planeGeometry args={[BOARD.w, BOARD.h]} />
           </mesh>
-          <group position={[-1.55, 1.15, 0.1]} ref={bind("nfc")}>
-            {[1.12, 0.88, 0.64, 0.4].map((r) => (
-              <mesh key={r} material={assets.copper}>
-                <torusGeometry args={[r, 0.05, 8, 36]} />
-              </mesh>
-            ))}
-            <mesh position={[0.15, -1.05, 0]} material={assets.copper}>
-              <boxGeometry args={[0.08, 0.35, 0.04]} />
+          <Passives body={assets.capTan} cap={assets.capEnd} cap2={assets.resBlack} />
+
+          {/* NFC: etched copper spiral on a black ferrite sheet. */}
+          <group position={[LAYOUT.nfc[0], LAYOUT.nfc[1], 0.01]} ref={bind("nfc")}>
+            <mesh position={[0, 0, 0.004]} material={assets.ferrite}>
+              <boxGeometry args={[LAYOUT.nfc[2], LAYOUT.nfc[3], 0.012]} />
+            </mesh>
+            <mesh position={[0, 0, 0.012]} material={assets.copper} geometry={coil} />
+            <mesh position={[0, 0, 0.03]} material={assets.chipSmall}>
+              <boxGeometry args={[0.36, 0.36, 0.04]} />
             </mesh>
           </group>
-          <group position={[-2.35, 0.05, 0.08]} ref={bind("gnss")}>
-            <mesh material={assets.ceramic}>
-              <boxGeometry args={[1.12, 1.12, 0.08]} />
+
+          {/* GNSS: ceramic patch antenna with a silver feed. */}
+          <group position={[LAYOUT.gnss[0], LAYOUT.gnss[1], 0.06]} ref={bind("gnss")}>
+            <RoundedBox args={[0.9, 0.9, 0.12]} radius={0.03} smoothness={2}>
+              <primitive object={assets.kapton} attach="material" />
+            </RoundedBox>
+            <mesh position={[0, 0, 0.065]} material={assets.silver}>
+              <boxGeometry args={[0.62, 0.62, 0.01]} />
             </mesh>
-            <mesh position={[0, 0, 0.06]} material={assets.gold}>
-              <boxGeometry args={[0.48, 0.48, 0.03]} />
-            </mesh>
-            <mesh position={[0.72, 0.2, 0.04]} material={assets.gold}>
-              <boxGeometry args={[0.42, 0.08, 0.02]} />
-            </mesh>
-          </group>
-          <group position={[-3.05, -0.72, 0.08]} ref={bind("mic")}>
-            <mesh material={assets.silver}>
-              <boxGeometry args={[0.46, 0.46, 0.12]} />
-            </mesh>
-            <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.07]} material={assets.silicon}>
-              <cylinderGeometry args={[0.09, 0.09, 0.03, 14]} />
+            <mesh position={[0.08, 0.08, 0.075]} rotation={[Math.PI / 2, 0, 0]} material={assets.silver}>
+              <cylinderGeometry args={[0.05, 0.05, 0.02, 16]} />
             </mesh>
           </group>
-          <group position={[-1.55, -1.55, 0.12]} ref={bind("haptics")}>
-            <mesh rotation={[Math.PI / 2, 0, 0]} material={assets.silver}>
-              <cylinderGeometry args={[0.46, 0.46, 0.16, 28]} />
-            </mesh>
-            <mesh position={[0.62, 0.16, 0]} rotation={[0, 0, 0.35]} material={assets.red}>
-              <boxGeometry args={[0.7, 0.035, 0.035]} />
-            </mesh>
-            <mesh position={[0.58, -0.14, 0]} rotation={[0, 0, -0.2]} material={assets.silicon}>
-              <boxGeometry args={[0.64, 0.035, 0.035]} />
-            </mesh>
-          </group>
-          <group position={[0.15, 1.28, 0.09]} ref={bind("flash")}>
-            <mesh material={assets.silicon2}>
-              <boxGeometry args={[1.55, 1.12, 0.1]} />
-            </mesh>
-            <mesh position={[-0.55, 0.38, 0.06]} material={assets.silver}>
-              <boxGeometry args={[0.12, 0.12, 0.02]} />
-            </mesh>
-          </group>
-          <group position={[2.15, 1.15, 0.08]} ref={bind("bluetooth")}>
-            <mesh material={assets.blue}>
-              <boxGeometry args={[1.4, 0.74, 0.07]} />
-            </mesh>
-            <mesh position={[-0.28, 0, 0.05]} material={assets.silicon}>
-              <boxGeometry args={[0.42, 0.42, 0.05]} />
-            </mesh>
-            {[-0.18, 0, 0.18].map((y) => (
-              <mesh key={y} position={[0.42, y, 0.045]} material={assets.gold}>
-                <boxGeometry args={[0.26, 0.07, 0.02]} />
-              </mesh>
-            ))}
-          </group>
-          <group position={[0.25, -1.48, 0.1]} ref={bind("battery")}>
-            <RoundedBox args={[4.35, 1.22, 0.16]} radius={0.1} smoothness={3}>
+
+          {/* MEMS microphone: a lidded metal can with a port hole. */}
+          <group position={[LAYOUT.mic[0], LAYOUT.mic[1], 0.05]} ref={bind("mic")}>
+            <RoundedBox args={[0.4, 0.3, 0.1]} radius={0.02} smoothness={2}>
               <primitive object={assets.silver} attach="material" />
             </RoundedBox>
-            <mesh position={[1.95, 0, 0.02]} material={assets.kapton}>
-              <boxGeometry args={[0.32, 0.62, 0.12]} />
+            <mesh rotation={[Math.PI / 2, 0, 0]} position={[0.08, 0, 0.051]} material={assets.silicon}>
+              <cylinderGeometry args={[0.04, 0.04, 0.01, 14]} />
             </mesh>
           </group>
-          <group position={[1.85, -0.85, 0.09]} ref={bind("processor")}>
+
+          {/* Haptics: a flat LRA under a metal cover, with its flex tail. */}
+          <group position={[LAYOUT.haptics[0], LAYOUT.haptics[1], 0.08]} ref={bind("haptics")}>
+            <RoundedBox args={[0.9, 0.62, 0.14]} radius={0.05} smoothness={3}>
+              <primitive object={assets.silver} attach="material" />
+            </RoundedBox>
+            <mesh position={[0.55, 0.15, -0.04]} material={assets.kapton}>
+              <boxGeometry args={[0.32, 0.14, 0.012]} />
+            </mesh>
+            <mesh position={[0.68, 0.15, -0.03]} material={assets.gold}>
+              <boxGeometry args={[0.1, 0.12, 0.014]} />
+            </mesh>
+          </group>
+
+          {/* Flash: BGA package, laser-marked. */}
+          <group position={[LAYOUT.flash[0], LAYOUT.flash[1], 0.07]} ref={bind("flash")}>
+            <mesh material={assets.silicon2}>
+              <boxGeometry args={[LAYOUT.flash[2] * 0.82, LAYOUT.flash[3] * 0.82, 0.1]} />
+            </mesh>
+            <mesh position={[0, 0, 0.051]} material={assets.chipFlash}>
+              <planeGeometry args={[LAYOUT.flash[2] * 0.8, LAYOUT.flash[3] * 0.8]} />
+            </mesh>
+          </group>
+
+          {/* Bluetooth: a small module with a meandered PCB antenna and a shield can. */}
+          <group position={[LAYOUT.bluetooth[0], LAYOUT.bluetooth[1], 0.05]} ref={bind("bluetooth")}>
+            <mesh material={assets.blue}>
+              <boxGeometry args={[LAYOUT.bluetooth[2], LAYOUT.bluetooth[3], 0.05]} />
+            </mesh>
+            {Array.from({ length: 6 }, (_, i) => (
+              <mesh key={i} position={[-0.6 + i * 0.1, 0.12, 0.03]} material={assets.gold}>
+                <boxGeometry args={[0.03, 0.32, 0.006]} />
+              </mesh>
+            ))}
+            <mesh position={[-0.35, 0.28, 0.03]} material={assets.gold}>
+              <boxGeometry args={[0.53, 0.03, 0.006]} />
+            </mesh>
+            <mesh position={[0.32, -0.04, 0.06]} material={assets.steel}>
+              <boxGeometry args={[0.66, 0.56, 0.07]} />
+            </mesh>
+          </group>
+
+          {/* Processor: QFN on its pad ring, laser-marked. */}
+          <group position={[LAYOUT.processor[0], LAYOUT.processor[1], 0.05]} ref={bind("processor")}>
             <mesh material={assets.silicon}>
-              <boxGeometry args={[1.28, 1.28, 0.05]} />
+              <boxGeometry args={[LAYOUT.processor[2], LAYOUT.processor[3], 0.03]} />
             </mesh>
-            <mesh position={[0, 0, 0.06]} material={assets.silicon2}>
-              <boxGeometry args={[0.78, 0.78, 0.08]} />
+            <mesh position={[0, 0, 0.04]} material={assets.silicon2}>
+              <boxGeometry args={[0.82, 0.82, 0.07]} />
             </mesh>
+            <mesh position={[0, 0, 0.076]} material={assets.chipCpu}>
+              <planeGeometry args={[0.8, 0.8]} />
+            </mesh>
+          </group>
+
+          <mesh position={[LAYOUT.pmic[0], LAYOUT.pmic[1], 0.04]} material={assets.chipSmall}>
+            <boxGeometry args={[0.42, 0.42, 0.06]} />
+          </mesh>
+
+          {/* Battery: a thin LiPo pouch, wrapped in amber tape, with nickel tabs. */}
+          <group position={[LAYOUT.battery[0], LAYOUT.battery[1], 0.1]} ref={bind("battery")}>
+            <RoundedBox args={[LAYOUT.battery[2], LAYOUT.battery[3], 0.16]} radius={0.07} smoothness={4}>
+              <primitive object={assets.silver} attach="material" />
+            </RoundedBox>
+            <mesh position={[-LAYOUT.battery[2] / 2 + 0.22, 0, 0.002]} material={assets.kapton}>
+              <boxGeometry args={[0.32, LAYOUT.battery[3] + 0.02, 0.168]} />
+            </mesh>
+            <mesh position={[LAYOUT.battery[2] / 2 - 0.5, 0, 0.002]} material={assets.kapton}>
+              <boxGeometry args={[0.22, LAYOUT.battery[3] + 0.02, 0.168]} />
+            </mesh>
+            {[-0.25, 0.25].map((y) => (
+              <mesh key={y} position={[-LAYOUT.battery[2] / 2 - 0.12, y, -0.04]} material={assets.steel}>
+                <boxGeometry args={[0.26, 0.16, 0.012]} />
+              </mesh>
+            ))}
           </group>
         </group>
       </group>

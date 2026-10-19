@@ -8,13 +8,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Mission is a personal AI memory kept encrypted on a device you own. Bring it to the agents you choose, share only what a session needs, unplug to stop future access. In development.",
+          "Mission is a personal AI memory kept encrypted on a device you own. Bring it to the agents you choose, share only what a session needs, unplug to stop future access.",
       },
       { property: "og:title", content: "Mission — your memory, on you" },
       {
         property: "og:description",
         content:
-          "A personal AI memory, encrypted on a device you own. Model and agent agnostic. In development; not taking orders.",
+          "A personal AI memory, encrypted on a device you own. Model and agent agnostic.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

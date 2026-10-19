@@ -61,7 +61,7 @@ function useHeroPrint() {
     img.decoding = 'async'
     img.onload = () => live && draw(img)
     img.src = '/assets/nasa/earth.webp'
-    document.fonts?.load('500 64px Handjet').then(() => live && img.complete && draw(img)).catch(() => {})
+    document.fonts?.load('400 64px Geist').then(() => live && img.complete && draw(img)).catch(() => {})
     return () => {
       live = false
       tex.t.dispose()

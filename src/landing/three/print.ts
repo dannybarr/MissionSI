@@ -3,6 +3,9 @@ import { CARD } from './geometry'
 /** The print plane is inset so it stays inside the notches. Coordinates below are centimetres, card centre, +x right, +y up. */
 export const PRINT = { inset: 0.2 }
 
+/** Card typography matches the product renders: a clean grotesk, light grey, laser-etched. */
+export const CARD_FONT = 'Geist, "Helvetica Neue", Arial, sans-serif'
+
 export function printPlaneSize() {
   return { w: CARD.w - PRINT.inset * 2, h: CARD.h - PRINT.inset * 2 }
 }
@@ -61,7 +64,7 @@ export function drawCardArt(ctx: CanvasRenderingContext2D, W: number, H: number,
       ctx.lineWidth = Math.max(1, at.s * 0.012)
       ctx.stroke()
     } else if (item.kind === 'word' || item.kind === 'initials') {
-      ctx.font = `500 ${item.h * 0.78 * at.s}px Handjet, system-ui, sans-serif`
+      ctx.font = `400 ${item.h * 0.7 * at.s}px ${CARD_FONT}`
       ctx.fillStyle = 'rgba(214, 215, 219, 0.94)'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
@@ -85,16 +88,19 @@ export function drawHeroPrint(ctx: CanvasRenderingContext2D, W: number, H: numbe
   ctx.clearRect(0, 0, W, H)
   const at = (x: number, y: number) => cardToCanvas(x, y, W, H)
 
-  const word = at(-2.2, 1.35)
-  ctx.font = `500 ${0.52 * word.s}px Handjet, system-ui, sans-serif`
-  ctx.fillStyle = 'rgba(214, 215, 219, 0.94)'
-  ctx.textAlign = 'center'
+  // Laser-etched marks read as a lighter tone of the graphite, not as white ink.
+  const word = at(-3.45, 1.52)
+  ctx.font = `400 ${0.6 * word.s}px ${CARD_FONT}`
+  ctx.fillStyle = 'rgba(176, 178, 183, 0.92)'
+  ctx.letterSpacing = `${-0.012 * word.s}px`
+  ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
   ctx.fillText('Mission', word.x, word.y)
+  ctx.letterSpacing = '0px'
 
   if (earth) {
-    const e = at(2.99, 1.52)
-    const r = 0.56 * e.s
+    const e = at(3.05, 1.55)
+    const r = 0.5 * e.s
     ctx.save()
     ctx.beginPath()
     ctx.arc(e.x, e.y, r, 0, Math.PI * 2)
@@ -108,17 +114,17 @@ export function drawHeroPrint(ctx: CanvasRenderingContext2D, W: number, H: numbe
     ctx.stroke()
   }
 
-  const db = at(2.95, -1.5)
-  ctx.font = `500 ${0.62 * db.s}px Handjet, system-ui, sans-serif`
-  ctx.fillStyle = 'rgba(206, 207, 212, 0.92)'
-  ctx.textAlign = 'center'
+  const db = at(3.5, -1.42)
+  ctx.font = `400 ${0.62 * db.s}px ${CARD_FONT}`
+  ctx.fillStyle = 'rgba(168, 170, 175, 0.92)'
+  ctx.textAlign = 'right'
   ctx.fillText('DB', db.x, db.y)
 
-  const micro = at(2.95, -2.05)
-  ctx.font = `500 ${0.15 * micro.s}px Handjet, system-ui, sans-serif`
-  ctx.fillStyle = 'rgba(190, 191, 196, 0.8)'
-  ctx.textAlign = 'center'
-  ctx.letterSpacing = `${0.14 * micro.s}px`
+  const micro = at(3.5, -2.0)
+  ctx.font = `500 ${0.1 * micro.s}px ${CARD_FONT}`
+  ctx.fillStyle = 'rgba(148, 150, 155, 0.75)'
+  ctx.textAlign = 'right'
+  ctx.letterSpacing = `${0.09 * micro.s}px`
   ctx.fillText('MS-01', micro.x, micro.y)
   ctx.letterSpacing = '0px'
 }

@@ -152,7 +152,7 @@ export function Opening({ reduced }: { reduced: boolean }) {
         <div className="opening-copy" ref={copy}>
           <p className="eyebrow" data-testid="status-prototype" data-reveal data-reveal-now data-delay="0.15">
             <i />
-            In development · not taking orders
+            Private by design · Works with any agent
           </p>
           <h1 data-split="now" data-delay="0.25">
             A personal AI memory, encrypted on a card <em className="sheen">you own.</em>
