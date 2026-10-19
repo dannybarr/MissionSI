@@ -23,7 +23,19 @@ Backgrounds were removed so the objects can drop onto the tray with CSS contact 
 | `public/assets/nasa/earth-240.webp` | The same NASA photograph, downscaled to 240 px for the landing page’s card drawings. |
 | `public/assets/nasa/*.webp` (Moon, Saturn, Sun, ISS limb) | Mission Studio’s artwork library only; the landing page does not use them. Credits for each are listed in `src/studio/studio/assets.ts`. |
 
-The card, its USB-C connector and the laptop are drawn in SVG on the page. They are not photographs of hardware. The older Studio renders of the previous card design were removed.
+The Mission card and USB-C connector remain concept renderings, not photographs of manufactured hardware.
+
+## Supplied and official photography
+
+| File | Credit and use |
+| --- | --- |
+| `public/media/product/everyday-carry-tray.png` | Photograph supplied by the site owner. Its pixels form the tray surface in the 3D opening sequence; the white backdrop is keyed out there. It is also displayed whole beside the concept card in reduced-motion mode. Confirm publication rights before launch. |
+| `public/media/product/apple-macbook-pro.jpg` | [Apple Newsroom, MacBook Pro with M4](https://www.apple.com/uk/newsroom/2024/10/new-macbook-pro-features-m4-family-of-chips-and-apple-intelligence/), 30 October 2024. Official Apple product photograph; illustrative device only. |
+| `public/media/product/apple-macbook-pro-connectivity.jpg` | From the same Apple Newsroom MacBook Pro gallery. Cropped and background-keyed for the opening cable sequence; illustrative device only. |
+| `public/media/product/apple-iphone-pro.jpg` | [Apple Newsroom, iPhone 16 Pro](https://www.apple.com/uk/newsroom/2024/09/apple-debuts-iphone-16-pro-and-iphone-16-pro-max/), 9 September 2024. Official Apple product photograph; illustrative device only. |
+| `public/media/product/earth-mark.png` | Earth image supplied by the site owner for the fixed navigation mark. |
+
+Apple is not affiliated with or endorsing Mission. Confirm permission for commercial reuse of Apple Newsroom photography before public launch; replace with licensed product photography if needed.
 
 ## Marks
 

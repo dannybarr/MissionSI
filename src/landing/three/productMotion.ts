@@ -18,7 +18,7 @@ export function productMotion(p: number) {
     insertion: phase(p, 0.51, 0.56) * (1 - phase(p, 0.62, 0.66)),
     cam: travel,
     copy: 1 - phase(p, 0.22, 0.35),
-    trayCopy: phase(p, 0.91, 0.98),
+    trayCopy: phase(p, 0.88, 0.97),
     // A shallow, positive-only settling arc: never intersect the tray floor.
     settle: p >= 0.96 ? 0 : Math.sin(Math.PI * phase(p, 0.86, 0.96)) * 0.06,
   }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
@@ -9,11 +9,42 @@ const MOUTH = -CARD.w / 2 + 0.17
 
 /** Tabletop is the card's local XY plane. Cable and sockets share this frame. */
 export function ConnectionRig() {
+  const [macPhoto, setMacPhoto] = useState<THREE.CanvasTexture | null>(null)
   const group = useRef<THREE.Group>(null)
   const plug = useRef<THREE.Group>(null)
   const wire = useRef<THREE.Mesh>(null)
   const lastGap = useRef(-1)
   const materials = useRef<THREE.Material[]>([])
+  useEffect(() => {
+    let live = true
+    const img = new Image()
+    img.onload = () => {
+      if (!live) return
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const dark = Math.max(pixels.data[i], pixels.data[i + 1], pixels.data[i + 2])
+        if (dark < 16) pixels.data[i + 3] = Math.round(pixels.data[i + 3] * Math.max(0, (dark - 3) / 13))
+        if (dark >= 16) {
+          pixels.data[i] = Math.min(255, pixels.data[i] * 1.35 + 8)
+          pixels.data[i + 1] = Math.min(255, pixels.data[i + 1] * 1.35 + 8)
+          pixels.data[i + 2] = Math.min(255, pixels.data[i + 2] * 1.35 + 8)
+        }
+      }
+      ctx.putImageData(pixels, 0, 0)
+      const texture = new THREE.CanvasTexture(canvas)
+      texture.colorSpace = THREE.SRGBColorSpace
+      texture.anisotropy = 8
+      setMacPhoto(texture)
+    }
+    img.src = '/media/product/apple-macbook-pro-connectivity.jpg'
+    return () => { live = false }
+  }, [])
+  useEffect(() => () => macPhoto?.dispose(), [macPhoto])
   const data = useMemo(() => {
     const points = [
       new THREE.Vector3(-9.9, 1.6, 0),
@@ -76,7 +107,11 @@ export function ConnectionRig() {
           <meshStandardMaterial color="#e9e5dd" roughness={0.65} />
         </RoundedBox>
       </group>
-      <group position={[-15.8, 2.3, -0.38]}>
+      {macPhoto && <mesh position={[-15.5, 2.3, -0.38]}>
+        <planeGeometry args={[11.5, 6.47]} />
+        <meshBasicMaterial map={macPhoto} transparent depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>}
+      <group visible={false} position={[-15.8, 2.3, -0.38]}>
         <RoundedBox args={[11, 7.5, 0.44]} radius={0.18} castShadow receiveShadow>
           <meshStandardMaterial color="#55585c" metalness={0.83} roughness={0.36} />
         </RoundedBox>

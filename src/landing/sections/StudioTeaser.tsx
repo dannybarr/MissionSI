@@ -537,11 +537,14 @@ export function StudioTeaser({ reduced }: { reduced: boolean }) {
           <i /> Studio preview
         </p>
         <h2 id="teaser-title" data-split>
-          Drag onto your card.
+          Design your card.
         </h2>
         <p className="teaser-sub" data-reveal>
-          Place the Earth, the wordmark and your initials. Then add hardware modules and see what each one is for. Studio opens with exactly this layout.
+          Make it yours in the Design Centre. Try the marks and modules here, then continue with your layout.
         </p>
+        <a className="btn btn-ink teaser-primary-cta" href="/studio?from=teaser" onClick={save} data-testid="link-teaser-studio-primary">
+          Open the Design Centre <span aria-hidden="true">→</span>
+        </a>
       </header>
 
       <div className="teaser-stage">

@@ -1,12 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { gsap, prefersStatic } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
-import { AGENT_MARKS } from './marks'
-
-const AGENTS = ['claude', 'chatgpt', 'gemini', 'grok', 'ollama'].map((id) => {
-  const mark = AGENT_MARKS.find((m) => m.id === id)!
-  return { ...mark, granted: id !== 'grok' }
-})
 
 const STEPS = [
   { h: 'Plug in the cable', p: 'A USB-C cable runs from the laptop into the port on the card’s left edge.' },
@@ -68,29 +62,10 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
     <section className={`plug conn ${reduced ? 'is-static' : ''}`} id="hardware" ref={root} aria-labelledby="plug-title">
       <div className="plug-pin">
         <div className="conn-scene" style={live}>
-          <div className="conn-laptop">
-            <div className="mbp">
-              <div className="mbp-lid">
-                <div className="mbp-notch" aria-hidden="true" />
-                <div className="mbp-screen">
-                  <p className="mbp-kicker">Mission</p>
-                  <ul>
-                    {AGENTS.map((a) => (
-                      <li key={a.id} style={{ ['--brand' as string]: a.cloth, ['--granted' as string]: a.granted ? 1 : 0 }}>
-                        <span dangerouslySetInnerHTML={{ __html: a.svg }} />
-                        <b>{a.name}</b>
-                        <em>{a.granted ? 'granted' : 'no grant'}</em>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <div className="mbp-deck" aria-hidden="true">
-                <div className="mbp-keys" />
-                <div className="mbp-track" />
-              </div>
-            </div>
-          </div>
+          <figure className="conn-laptop conn-device-photo">
+            <img src="/media/product/apple-macbook-pro.jpg" alt="MacBook Pro computers, official Apple product photograph" width={600} height={600} loading="lazy" />
+            <figcaption>MacBook Pro · Apple photography</figcaption>
+          </figure>
 
           <svg className="conn-cable" viewBox="0 0 240 80" aria-hidden="true">
             <defs>
@@ -113,20 +88,10 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
             <CardFace plug status={1} className="live-status" alt="The Mission card, USB-C port on the left edge" />
           </div>
 
-          <div className="conn-phone" aria-hidden="true">
-            <div className="phone">
-              <div className="phone-screen">
-                <div className="phone-island" />
-                <div className="phone-bar"><b>9:41</b></div>
-                <div className="phone-pair">
-                  <span />
-                  <span />
-                  <strong>Mission</strong>
-                  <em>Bluetooth pairing</em>
-                </div>
-              </div>
-            </div>
-          </div>
+          <figure className="conn-phone conn-device-photo" aria-hidden="true">
+            <img src="/media/product/apple-iphone-pro.jpg" alt="" width={600} height={600} loading="lazy" />
+            <figcaption>iPhone 16 Pro · Apple photography</figcaption>
+          </figure>
         </div>
 
         <div className="plug-copy">
@@ -152,7 +117,7 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
           <i aria-hidden="true" />
           {READOUT[phase]}
         </p>
-        <p className="plug-fine">Concept animation. The card has not been manufactured yet.</p>
+        <p className="plug-fine">Concept animation. Apple device photography is illustrative; no Apple affiliation. The Mission card has not been manufactured.</p>
       </div>
     </section>
   )

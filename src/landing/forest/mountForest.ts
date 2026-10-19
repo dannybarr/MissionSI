@@ -49,7 +49,7 @@ export function mountForest({ canvas, src, reduced }: ForestOptions): () => void
   const actx = atlas.getContext('2d')!
   actx.clearRect(0, 0, atlas.width, atlas.height)
   actx.fillStyle = '#fff'
-  actx.font = `600 ${Math.round(cell * 0.86)}px "Geist", "Schibsted Grotesk", sans-serif`
+  actx.font = `600 ${Math.round(cell * 0.86)}px "Handjet", system-ui, sans-serif`
   actx.textAlign = 'center'
   actx.textBaseline = 'middle'
   for (let i = 0; i < RAMP.length; i++) actx.fillText(RAMP[i] === ' ' ? '' : RAMP[i], i * cell + cell / 2, cell / 2 + 1)

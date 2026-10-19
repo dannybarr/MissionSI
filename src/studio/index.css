@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Handjet:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -103,9 +104,9 @@
   --chart-4: 40 30% 70%;
   --chart-5: 220 5% 30%;
   --signal: 18 100% 56%;
-  --app-font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: 'Geist Mono', ui-monospace, monospace;
+  --app-font-sans: 'Handjet', system-ui, sans-serif;
+  --app-font-serif: 'Handjet', system-ui, sans-serif;
+  --app-font-mono: 'Handjet', system-ui, sans-serif;
   --radius: 0.375rem;
   --primary-border: hsl(var(--primary));
   --secondary-border: hsl(var(--border));

@@ -131,7 +131,7 @@ function usePrint() {
     img.onload = () => live && draw(img);
     img.src = "/assets/nasa/earth-240.webp";
     document.fonts
-      ?.load("500 64px Geist")
+      ?.load("500 64px Handjet")
       .then(() => live && img.complete && draw(img))
       .catch(() => {});
     return () => {

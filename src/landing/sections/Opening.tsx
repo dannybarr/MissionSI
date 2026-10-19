@@ -5,7 +5,6 @@ import { Magnetic } from '@/landing/components/Magnetic'
 import { pose, signals } from '@/landing/three/pose'
 import { phase, productMotion } from '@/landing/three/productMotion'
 import { Hero } from './Hero'
-import { Tray } from './Tray'
 
 export function Opening({ reduced }: { reduced: boolean }) {
   const section = useRef<HTMLElement>(null)
@@ -71,7 +70,9 @@ export function Opening({ reduced }: { reduced: boolean }) {
       copyEl.inert = next.copy < 0.05
       trayEl.style.opacity = String(next.trayCopy)
       trayEl.style.translate = `0 ${(1 - next.trayCopy) * 12}px`
+      view.style.opacity = '1'
       el.style.setProperty('--connection-caption', String(next.connection))
+      document.documentElement.style.setProperty('--connect-dark', String(phase(progress.value, 0.32, 0.37) * (1 - phase(progress.value, 0.64, 0.71))))
       pose.inspection = phase(progress.value, 0.24, 0.4)
       el.style.setProperty('--inspection', String(pose.inspection))
     }
@@ -131,16 +132,12 @@ export function Opening({ reduced }: { reduced: boolean }) {
       unregister()
       release()
       signals.onReady = () => {}
+      document.documentElement.style.removeProperty('--connect-dark')
     }
   }, [reduced])
 
   if (reduced) {
-    return (
-      <>
-        <Hero reduced />
-        <Tray reduced />
-      </>
-    )
+    return <Hero reduced />
   }
 
   return (
@@ -182,12 +179,12 @@ export function Opening({ reduced }: { reduced: boolean }) {
             <li className="hero-specs-note">Concept · not manufactured</li>
           </ul>
         </div>
-        <div className="opening-tray-copy" id="carry" ref={trayCopy}>
+        <div className="opening-tray-copy" ref={trayCopy}>
           <p className="eyebrow">
             <i /> Everyday carry
           </p>
           <h2>It lives with the things you already take.</h2>
-          <p>A card. A key. The rest of a pocket. Connect it when you want an agent to know you. Put it away when you don’t.</p>
+          <p>The card belongs beside the things you already carry. Connect it when you choose; put it away when you’re done.</p>
         </div>
         <div className="opening-fallback" aria-hidden="true">
           <CardFace className="hero-card" />

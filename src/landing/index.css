@@ -1,16 +1,18 @@
-/* Mission landing — light paper, near-black type, dark full-bleed bands.
+@import url('https://fonts.googleapis.com/css2?family=Handjet:wght@300;400;500;600;700&display=swap');
+
+/* Mission landing — grey-grain surface, black type, dark full-bleed bands.
    Scoped to .mission-site so it does not leak into Studio. */
 
 .mission-site {
   /* ghost.ai hero: background-color rgb(234, 233, 231) and the same wash. */
-  --creme: rgb(234, 233, 231);
-  --paper: rgb(234, 233, 231);
-  --paper-2: #e2e0df;
-  --paper-3: #d8d6d3;
-  --ink: #141416;
-  --ink-2: #2c2c31;
-  --ink-soft: #5c5c62;
-  --ink-faint: #6e6e74;
+  --paper: #e7e7e7;
+  --paper-2: #dedede;
+  --paper-3: #d2d2d2;
+  --grey-surface: radial-gradient(ellipse 90% 75% at 33% 16%, #f4f4f4 0%, #ececec 52%, #d9dbdf 100%);
+  --ink: #050505;
+  --ink-2: #101010;
+  --ink-soft: #171717;
+  --ink-faint: #262626;
   --line: rgba(20, 20, 22, 0.1);
   --line-2: rgba(20, 20, 22, 0.18);
   --night: #0e0f10;
@@ -19,8 +21,8 @@
   --on-night-soft: rgba(243, 242, 238, 0.66);
   --blue: #1f4fa8;
   --glow: #dcecff;
-  --sans: 'Geist', 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --sans: 'Handjet', system-ui, sans-serif;
+  --mono: 'Handjet', system-ui, sans-serif;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
   --gutter: clamp(20px, 4.2vw, 80px);
@@ -28,8 +30,9 @@
   --radius: 22px;
   --grain-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='d'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 -0.5'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23d)'/%3E%3C/svg%3E");
   --grain-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 -1 0 0 0 0.5'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23l)'/%3E%3C/svg%3E");
-  background-color: rgb(234, 233, 231);
-  background-image: linear-gradient(rgb(234 233 231 / 30%), rgb(234 233 231 / 30%));
+  background-color: var(--paper);
+  background-image: linear-gradient(rgb(14 15 16 / var(--connect-dark, 0)), rgb(14 15 16 / var(--connect-dark, 0))), var(--grey-surface);
+  background-size: 100% 100%;
   color: var(--ink);
   font-family: var(--sans);
   font-size: 17px;
@@ -94,8 +97,8 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 /* ---------- nav ---------- */
 .site-nav { position: fixed; z-index: 60; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 28px; padding: 16px var(--gutter); transition: transform 0.7s var(--ease), background-color 0.4s, box-shadow 0.4s; }
 .site-nav.solid { background: rgba(234, 233, 231, 0.82); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); box-shadow: 0 1px 0 var(--line); }
-.site-nav.is-hidden { transform: translateY(-105%); }
-.wordmark { font-weight: 560; letter-spacing: -0.035em; font-size: 19px; }
+.wordmark { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: -0.025em; font-size: 25px; }
+.wordmark img { width: 34px; height: 34px; object-fit: contain; }
 .site-nav nav { display: flex; gap: 26px; margin-left: auto; font-size: 14px; color: var(--ink-soft); }
 .site-nav nav a { position: relative; transition: color 0.3s; }
 .site-nav nav a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: right; transition: transform 0.5s var(--ease); }
@@ -145,6 +148,9 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 }
 .opening.is-ready .opening-fallback { opacity: 0; }
 .opening-connection-caption { position: absolute; z-index: 2; left: var(--gutter); bottom: 6vh; margin: 0; font-size: clamp(22px, 2.6vw, 38px); line-height: 1.15; letter-spacing: -0.035em; opacity: var(--connection-caption, 0); pointer-events: none; }
+.opening-connection-caption { color: #f4f4f4; }
+.opening-connection-caption span { color: rgba(244, 244, 244, 0.72); }
+.opening .opening-connection-caption span { color: rgba(244, 244, 244, 0.72); }
 .opening-connection-caption span { color: var(--ink-soft); }
 .mission-site .site-grain { opacity: .35; }
 
@@ -329,7 +335,7 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .placed:focus-visible { outline: 1.5px solid var(--glow); outline-offset: 4px; }
 .placed:hover::after, .placed:focus-visible::after { content: ''; position: absolute; inset: -4px; border-radius: 6px; box-shadow: 0 0 0 1px rgba(220, 236, 255, 0.4); pointer-events: none; }
 .placed > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; pointer-events: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 8px rgba(0, 0, 0, 0.35); }
-.pw, .pi { font-family: 'Geist', sans-serif; font-weight: 400; color: #a7a7ac; line-height: 1; white-space: nowrap; pointer-events: none; }
+.pw, .pi { font-family: var(--sans); font-weight: 500; color: #a7a7ac; line-height: 1; white-space: nowrap; pointer-events: none; }
 .pw { font-size: 8.1cqw; letter-spacing: -0.02em; }
 .pi { font-size: 10.6cqw; letter-spacing: -0.02em; }
 .pf { width: 100%; height: 100%; display: block; pointer-events: none; filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 0 rgba(255, 255, 255, 0.12)); }
@@ -694,8 +700,75 @@ html.m-js .mission-site [data-reveal-now] { visibility: hidden; animation: m-sho
 .mission-site.reduced .captures-icons li,
 .mission-site.reduced .captures-caption { animation: none; }
 
+/* The cool grey tonal falloff is visible across every light chapter. */
+body:has(.mission-site) { background-color: #e7e7e7; }
+.mission-site .site-grain-wash { background: #777; opacity: 0.035; }
+.statement, .how, .teaser, .faq, .close, .site-footer, .tray {
+  background-color: var(--paper);
+  background-image: var(--grey-surface);
+  background-size: 100% 100%;
+}
+.captures {
+  background-color: var(--paper);
+  background-image: var(--grey-surface);
+  background-size: 100% 100%;
+}
+.site-nav.solid { background: rgba(235, 235, 235, 0.92); }
+
+/* Supplied everyday-carry photograph, displayed unaltered beside the concept card. */
+.carry-still { display: grid; grid-template-columns: minmax(150px, 0.43fr) minmax(0, 1fr); align-items: center; gap: clamp(12px, 2vw, 32px); min-width: 0; }
+.carry-still figure { margin: 0; min-width: 0; }
+.carry-still-card { transform: rotate(-5deg); filter: drop-shadow(0 18px 20px rgba(43, 32, 21, 0.24)); }
+.carry-still-card .card-face { width: 100%; }
+.carry-still-photo img { display: block; width: 100%; height: auto; background: #fff; box-shadow: 0 20px 60px -34px rgba(43, 32, 21, 0.35); }
+.carry-still figcaption { margin-top: 12px; color: var(--ink-soft); font-size: 11px; letter-spacing: 0.04em; line-height: 1.35; }
+.opening-carry-still { position: absolute; z-index: 2; width: min(61vw, 1000px); right: 3vw; top: 50%; translate: 0 -50%; opacity: var(--carry-photo, 0); pointer-events: none; }
+.opening-carry-still .carry-still-card { opacity: var(--carry-card, 0); transform: rotate(-5deg) translateY(calc((1 - var(--carry-card, 0)) * -24px)); }
+.opening-carry-wash { position: absolute; z-index: 1; inset: 0; background-color: var(--paper); background-image: var(--grey-surface); background-size: 100% 100%; opacity: var(--carry-photo, 0); pointer-events: none; }
+.opening-carry-still .carry-still-photo img { max-height: 66vh; object-fit: contain; }
+.opening-tray-copy { bottom: 10vh; max-width: 340px; }
+.tray-pin { grid-template-columns: minmax(250px, 390px) minmax(0, 1fr); }
+.tray-pin .carry-still { width: 100%; }
+.teaser-primary-cta { margin-top: 26px; }
+
+/* Apple-supplied device imagery replaces the former generic device drawings. */
+.conn-device-photo { margin: 0; min-width: 0; }
+.conn-device-photo img { display: block; width: 100%; height: auto; object-fit: contain; }
+.conn-laptop img { height: clamp(180px, 20vw, 250px); object-fit: cover; object-position: center; -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, #000 66%, transparent 100%); mask-image: radial-gradient(ellipse 70% 70% at center, #000 66%, transparent 100%); }
+.conn-phone img { -webkit-mask-image: radial-gradient(ellipse 65% 70% at center, #000 70%, transparent 100%); mask-image: radial-gradient(ellipse 65% 70% at center, #000 70%, transparent 100%); }
+.conn-device-photo { mix-blend-mode: screen; }
+.conn-device-photo img { -webkit-mask-image: none; mask-image: none; }
+.conn-cable { transform: scaleX(1.45); transform-origin: right center; }
+.conn-device-photo figcaption { color: rgba(243, 242, 238, 0.62); font-size: 11px; letter-spacing: 0.03em; margin-top: 8px; text-align: center; }
+.conn-laptop { width: min(28vw, 420px); }
+.conn-phone { width: min(230px, 22vw); }
+@media (min-width: 901px) {
+  .conn-scene { grid-template-columns: minmax(0, 1fr) auto auto; gap: 1vw; padding: 14vh 3vw 14vh 38vw; }
+  .conn-laptop { width: min(25vw, 340px); }
+  .conn-cable { width: min(12vw, 140px); }
+  .conn-card { width: min(18vw, 220px); }
+  .conn-phone { right: 23vw; }
+}
+
+@media (max-width: 900px) {
+  .opening-carry-still { width: min(90vw, 650px); left: 50%; right: auto; top: 42%; translate: -50% -50%; }
+  .opening-tray-copy { bottom: 5vh; width: min(600px, calc(100vw - 2 * var(--gutter))); }
+  .tray-pin { grid-template-columns: 1fr; }
+  .conn-laptop { width: min(48vw, 360px); }
+  .conn-phone { width: min(180px, 46vw); }
+}
+@media (max-width: 600px) {
+  .carry-still { grid-template-columns: 0.45fr 1fr; gap: 10px; }
+  .carry-still figcaption { font-size: 9px; margin-top: 6px; }
+  .opening-carry-still { width: calc(100vw - 24px); top: 42%; }
+  .opening-carry-still .carry-still-photo img { max-height: 43vh; }
+  .opening-tray-copy { bottom: 22px; }
+  .teaser-primary-cta { margin-top: 22px; }
+  .conn-laptop { width: min(55vw, 290px); }
+}
+
 /* ---------- site grain: ghost.ai data-site-texture ---------- */
-body:has(.mission-site) { background-color: rgb(234, 233, 231); }
+body:has(.mission-site) { background-color: #e7e7e7; }
 .site-grain { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
 .site-grain-wash { position: absolute; inset: 0; background: #686868; opacity: 0.06; }
 .site-grain-dark, .site-grain-light { position: absolute; inset: 0; background-size: 200px 200px; opacity: 0.3; }
@@ -739,7 +812,7 @@ body:has(.mission-site) { background-color: rgb(234, 233, 231); }
 .still-board { position: absolute; left: 50%; top: 46%; width: min(46%, 420px); translate: -50% -50%; filter: drop-shadow(0 18px 24px rgba(20, 20, 22, 0.16)); }
 
 /* ---------- captures: tabs, centred card, halftone objects ---------- */
-.captures { height: 260vh; background-color: rgb(234, 233, 231); background-image: linear-gradient(to right, rgba(20, 20, 22, 0.055) 1px, transparent 1px), linear-gradient(to bottom, rgba(20, 20, 22, 0.055) 1px, transparent 1px); background-size: 80px 80px; background-position: center top; }
+.captures { height: 260vh; background-color: var(--paper); background-image: var(--grey-surface); background-size: 100% 100%; background-position: center top; }
 .captures-pin { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; align-items: center; padding: clamp(84px, 11vh, 112px) var(--gutter) 28px; overflow: hidden; }
 .captures h2 { font-size: clamp(32px, 3.2vw, 48px); font-weight: 500; letter-spacing: -0.045em; line-height: 1; margin: 0 0 18px; text-align: center; }
 .captures-tabs { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 116px)); gap: 4px; width: min(100%, 364px); padding: 4px; background: rgba(0, 109, 223, 0.1); }

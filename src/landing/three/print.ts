@@ -61,7 +61,7 @@ export function drawCardArt(ctx: CanvasRenderingContext2D, W: number, H: number,
       ctx.lineWidth = Math.max(1, at.s * 0.012)
       ctx.stroke()
     } else if (item.kind === 'word' || item.kind === 'initials') {
-      ctx.font = `500 ${item.h * 0.78 * at.s}px Geist, "Schibsted Grotesk", sans-serif`
+      ctx.font = `500 ${item.h * 0.78 * at.s}px Handjet, system-ui, sans-serif`
       ctx.fillStyle = 'rgba(214, 215, 219, 0.94)'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
@@ -86,7 +86,7 @@ export function drawHeroPrint(ctx: CanvasRenderingContext2D, W: number, H: numbe
   const at = (x: number, y: number) => cardToCanvas(x, y, W, H)
 
   const word = at(-2.2, 1.35)
-  ctx.font = `500 ${0.46 * word.s}px Geist, "Schibsted Grotesk", sans-serif`
+  ctx.font = `500 ${0.52 * word.s}px Handjet, system-ui, sans-serif`
   ctx.fillStyle = 'rgba(214, 215, 219, 0.94)'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -109,13 +109,13 @@ export function drawHeroPrint(ctx: CanvasRenderingContext2D, W: number, H: numbe
   }
 
   const db = at(2.95, -1.5)
-  ctx.font = `500 ${0.58 * db.s}px Geist, "Schibsted Grotesk", sans-serif`
+  ctx.font = `500 ${0.62 * db.s}px Handjet, system-ui, sans-serif`
   ctx.fillStyle = 'rgba(206, 207, 212, 0.92)'
   ctx.textAlign = 'center'
   ctx.fillText('DB', db.x, db.y)
 
   const micro = at(2.95, -2.05)
-  ctx.font = `500 ${0.13 * micro.s}px "Geist Mono", ui-monospace, monospace`
+  ctx.font = `500 ${0.15 * micro.s}px Handjet, system-ui, sans-serif`
   ctx.fillStyle = 'rgba(190, 191, 196, 0.8)'
   ctx.textAlign = 'center'
   ctx.letterSpacing = `${0.14 * micro.s}px`

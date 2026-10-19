@@ -95,7 +95,7 @@ export function Footer() {
       <div>
         <strong>Imagery</strong>
         <p>
-          Earth photograph: NASA, The Blue Marble. Forest photograph and the tray objects are generated renders made for this page. The card and laptop are drawn here, not photographs of hardware. Full list in IMAGE_CREDITS.md.
+          Earth photograph: NASA, The Blue Marble. Everyday-carry tray: supplied reference photograph. MacBook Pro and iPhone: Apple product photography, used illustratively without affiliation. Mission card: concept rendering, not manufactured hardware. Full list in IMAGE_CREDITS.md.
         </p>
       </div>
       <div>

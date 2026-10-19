@@ -273,7 +273,8 @@ export function defaultProject(): Project {
     version: 1,
     name: 'Mission / Concept 001',
     variants,
-    activeVariantId: variants[0].id,
+    // Lead with the graphite concept shown throughout the landing page.
+    activeVariantId: variants[1].id,
     savedAt: null,
   };
 }

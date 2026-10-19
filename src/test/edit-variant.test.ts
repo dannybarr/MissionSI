@@ -5,7 +5,7 @@ import { defaultProject } from '@/studio/studio/presets'
 describe('editActive', () => {
   it('forks a preset variant and keeps the original name on the preset', () => {
     const project = defaultProject()
-    const original = project.variants[0]
+    const original = project.variants.find((v) => v.id === project.activeVariantId)!
     const next = editActive(
       project,
       (v) => ({ ...v, design: { ...v.design, body: { ...v.design.body, color: '#112233' } } }),
@@ -34,6 +34,6 @@ describe('editActive', () => {
     expect(again.variants).toHaveLength(forked.variants.length)
     expect(again.activeVariantId).toBe('v-forked')
     expect(again.variants.find((v) => v.id === 'v-forked')?.design.body.color).toBe('#445566')
-    expect(again.variants.find((v) => v.id === 'v-forked')?.name).toBe(`${project.variants[0].name} · edit`)
+    expect(again.variants.find((v) => v.id === 'v-forked')?.name).toBe(`${project.variants.find((v) => v.id === project.activeVariantId)!.name} · edit`)
   })
 })

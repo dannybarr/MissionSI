@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { PerspectiveCamera, RoundedBox } from '@react-three/drei'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
@@ -61,7 +61,7 @@ function useHeroPrint() {
     img.decoding = 'async'
     img.onload = () => live && draw(img)
     img.src = '/assets/nasa/earth.webp'
-    document.fonts?.load('500 64px Geist').then(() => live && img.complete && draw(img)).catch(() => {})
+    document.fonts?.load('500 64px Handjet').then(() => live && img.complete && draw(img)).catch(() => {})
     return () => {
       live = false
       tex.t.dispose()
@@ -169,6 +169,46 @@ function Tray() {
       <mesh geometry={geos.walls} material={wallMat} castShadow receiveShadow />
       <mesh geometry={geos.floor} material={floorMat} receiveShadow />
     </group>
+  )
+}
+
+/** The supplied photograph is the actual surface of the tray in the 3D sequence. */
+function PhotoTray() {
+  const [photo, setPhoto] = useState<THREE.CanvasTexture | null>(null)
+  useEffect(() => {
+    let live = true
+    const img = new Image()
+    img.onload = () => {
+      if (!live) return
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      for (let i = 0; i < pixels.data.length; i += 4) {
+        const r = pixels.data[i], g = pixels.data[i + 1], b = pixels.data[i + 2]
+        const white = Math.min(r, g, b)
+        if (white > 246) pixels.data[i + 3] = Math.round(pixels.data[i + 3] * (255 - white) / 9)
+      }
+      ctx.putImageData(pixels, 0, 0)
+      const texture = new THREE.CanvasTexture(canvas)
+      texture.colorSpace = THREE.SRGBColorSpace
+      texture.anisotropy = 8
+      setPhoto(texture)
+    }
+    img.src = '/media/product/everyday-carry-tray.png'
+    return () => { live = false }
+  }, [])
+  useEffect(() => () => photo?.dispose(), [photo])
+  if (!photo) return null
+  const width = 33
+  const depth = width * photo.image.height / photo.image.width
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]} receiveShadow>
+      <planeGeometry args={[width, depth]} />
+      <meshBasicMaterial map={photo} transparent depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
   )
 }
 
@@ -303,14 +343,14 @@ export function OpeningScene() {
     const cardY = mobile ? 0 : 0.15
     const trayX = 3.4
     hero.set(cardX, cardY, 0)
-    slot.set(trayX - 0.6, TRAY_Y + 0.28 + CARD.t / 2 + 0.012 + pose.settle, -2.4)
+    slot.set(trayX - 21.5, TRAY_Y + 0.28 + CARD.t / 2 + 0.012 + pose.settle, 0)
     const cardPos = hero.lerp(slot, lay)
     look.set(THREE.MathUtils.lerp(0, cardX - (mobile ? 5.2 : 7.8), pose.connection), cardY + (mobile ? visH * 0.22 * (1 - pose.inspection) : 0), 0)
-    lookT.set(trayX - (mobile ? 0 : 7), TRAY_Y + (mobile ? -4.8 : 0.5), 0.2)
+    lookT.set(trayX - 8, TRAY_Y + (mobile ? -4.8 : 0.5), 0.2)
     look.lerp(lookT, t)
     const elev = THREE.MathUtils.lerp(0.07, 1.34, t)
     const connectionDistance = Math.max(dist, (mobile ? 21 : 34) / (2 * Math.tan((fov * Math.PI) / 360) * aspect))
-    const distNow = THREE.MathUtils.lerp(THREE.MathUtils.lerp(dist, connectionDistance, pose.connection), mobile ? 110 : 76, t)
+    const distNow = THREE.MathUtils.lerp(THREE.MathUtils.lerp(dist, connectionDistance, pose.connection), mobile ? 125 : 104, t)
     camPos.set(look.x, look.y + Math.sin(elev) * distNow, look.z + Math.cos(elev) * distNow)
     camera.position.copy(camPos)
     camera.lookAt(look)
@@ -337,9 +377,9 @@ export function OpeningScene() {
     if (shade && shadeMat) {
       const facing = Math.abs(Math.cos(pose.spin))
       shade.position.set(cardPos.x + 0.7 * (1 - lay), cardPos.y - (2.15 + facing * 0.45) * (1 - lay), -0.9)
-      shade.scale.set(3.1 + facing * 2.8, 1.15 + facing * 2.1, 1)
-      shadeMat.opacity = (0.28 + facing * 0.22) * (1 - Math.min(1, t * 1.4))
-      shade.visible = t < 0.92
+      shade.scale.set(3.1 + facing * 2.8 + t * 1.5, 1.15 + facing * 2.1 + t * 0.7, 1)
+      shadeMat.opacity = (0.26 + facing * 0.19) * (1 - pose.cam * 0.55)
+      shade.visible = t < 0.97
     }
     const heroIdle = t < 0.2 && pose.spinning < 0.5
     glow.v = heroIdle ? 0.45 + Math.sin(state.clock.elapsedTime * 1.35) * 0.2 : Math.max(0, 0.85 - t * 1.1)
@@ -377,12 +417,15 @@ export function OpeningScene() {
         <meshBasicMaterial ref={heroShadowMat} map={blob} transparent depthWrite={false} opacity={0.3} />
       </mesh>
       <group ref={tray} position={[3.4, TRAY_Y - 20, 0]}>
+        <PhotoTray />
+        <group visible={false}>
         <Tray />
         <Carry blob={blob} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
           <planeGeometry args={[40, 30]} />
           <shadowMaterial transparent opacity={0.16} />
         </mesh>
+        </group>
       </group>
       <group ref={card}>
         <ProductCard print={print} glow={glow} />

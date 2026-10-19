@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useState } from 'react'
 import { useLandingScroll } from '@/landing/lib/smooth'
 import { useReveals } from '@/landing/lib/reveal'
 import { Opening } from '@/landing/sections/Opening'
+import { Tray } from '@/landing/sections/Tray'
 import { Statement } from '@/landing/sections/Statement'
 import { Flags } from '@/landing/sections/Flags'
 import { Forest } from '@/landing/sections/Forest'
@@ -24,30 +25,20 @@ const LINKS = [
 
 function Nav() {
   const [solid, setSolid] = useState(false)
-  const [hidden, setHidden] = useState(false)
   const [open, setOpen] = useState(false)
   useEffect(() => {
-    let last = window.scrollY
-    let travel = 0
     const on = () => {
-      const y = window.scrollY
-      const dy = y - last
-      last = y
-      setSolid(y > 12)
-      // accumulate a little travel first so trackpad jitter doesn't flicker the bar
-      travel = Math.sign(dy) === Math.sign(travel) ? travel + dy : dy
-      if (y < 120) setHidden(false)
-      else if (travel > 36) setHidden(true)
-      else if (travel < -24) setHidden(false)
+      setSolid(window.scrollY > 12)
     }
     on()
     window.addEventListener('scroll', on, { passive: true })
     return () => window.removeEventListener('scroll', on)
   }, [])
   return (
-    <header className={`site-nav ${solid ? 'solid' : ''} ${hidden && !open ? 'is-hidden' : ''}`} onFocus={() => setHidden(false)}>
+    <header className={`site-nav ${solid ? 'solid' : ''}`}>
       <a href="#top" className="wordmark">
-        Mission
+        <img src="/media/product/earth-mark.png" alt="" width={34} height={34} />
+        <span>Mission</span>
       </a>
       <nav aria-label="Page">
         {LINKS.map(([id, label]) => (
@@ -107,6 +98,7 @@ export default function LandingApp() {
       <Nav />
       <main>
         <Opening reduced={reduced} />
+        {reduced && <Tray reduced />}
         <Statement reduced={reduced} />
         <Flags reduced={reduced} />
         <OpenCard reduced={reduced} />
