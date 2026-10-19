@@ -26,6 +26,8 @@ export interface ArtItem {
   h: number
   text?: string
   svg?: string
+  /** Mark colour; engraved marks read as a lighter or darker tone of the finish. */
+  color?: string
 }
 
 const etchCache = new Map<string, HTMLImageElement>()
@@ -65,7 +67,7 @@ export function drawCardArt(ctx: CanvasRenderingContext2D, W: number, H: number,
       ctx.stroke()
     } else if (item.kind === 'word' || item.kind === 'initials') {
       ctx.font = `400 ${item.h * 0.7 * at.s}px ${CARD_FONT}`
-      ctx.fillStyle = 'rgba(214, 215, 219, 0.94)'
+      ctx.fillStyle = item.color ?? 'rgba(214, 215, 219, 0.94)'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillText(item.text ?? '', at.x, at.y)

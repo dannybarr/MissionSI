@@ -15,6 +15,11 @@ export interface TeaserPlacement {
   earth?: XY
   initials?: XY
   features?: FeaturePlacement[]
+  /** Studio material preset id chosen in the homepage preview, e.g. 'matteGraphite'. */
+  finish?: string
+  wordmarkText?: string
+  initialsText?: string
+  markFinish?: 'printed' | 'engraved' | 'embossed'
 }
 
 export type IdentityId = 'wordmark' | 'earth' | 'initials'
@@ -54,7 +59,18 @@ export function readTeaserPlacement(): TeaserPlacement | null {
           return pos && isFeatureId(id) ? [{ id, ...pos }] : []
         })
       : []
-    const out: TeaserPlacement = { wordmark: xy(p.wordmark), earth: xy(p.earth), initials: xy(p.initials), features }
+    const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : undefined)
+    const markFinish = p.markFinish === 'printed' || p.markFinish === 'engraved' || p.markFinish === 'embossed' ? p.markFinish : undefined
+    const out: TeaserPlacement = {
+      wordmark: xy(p.wordmark),
+      earth: xy(p.earth),
+      initials: xy(p.initials),
+      features,
+      finish: str(p.finish, 40),
+      wordmarkText: str(p.wordmarkText, 24),
+      initialsText: str(p.initialsText, 4),
+      markFinish,
+    }
     return out.wordmark || out.earth || out.initials || features.length ? out : null
   } catch {
     return null

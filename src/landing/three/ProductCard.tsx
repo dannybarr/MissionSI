@@ -28,7 +28,13 @@ function beadTexture() {
   return tex
 }
 
-export function ProductCard({ print, glow: _glow }: { print: THREE.Texture | null; glow: { v: number } }) {
+export interface CardFinish {
+  color: string
+  metalness: number
+  roughness: number
+}
+
+export function ProductCard({ print, glow: _glow, finish }: { print: THREE.Texture | null; glow: { v: number }; finish?: CardFinish }) {
   const geos = useMemo(() => cardGeometries(), [])
   const mats = useMemo(() => {
     const rough = beadTexture()
@@ -88,6 +94,16 @@ export function ProductCard({ print, glow: _glow }: { print: THREE.Texture | nul
     },
     [backPanel, mats],
   )
+
+  // Studio preview finishes: the rim takes the finish, the recessed face sits a shade deeper.
+  useEffect(() => {
+    if (!finish) return
+    mats.body.color.set(finish.color)
+    mats.body.metalness = Math.min(0.8, finish.metalness * 0.8)
+    mats.body.roughness = Math.max(0.4, finish.roughness)
+    mats.face.color.set(finish.color).multiplyScalar(0.72)
+    mats.face.roughness = Math.min(0.9, finish.roughness + 0.2)
+  }, [finish, mats])
 
   if (print && mats.ink.map !== print) {
     mats.ink.map = print

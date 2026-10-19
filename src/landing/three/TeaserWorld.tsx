@@ -7,7 +7,7 @@ import * as THREE from 'three'
 import { CARD } from './geometry'
 import { drawCardArt, printPlaneSize, setEtchReady } from './print'
 import { ProductCard } from './ProductCard'
-import { getTeaserArt, subscribeTeaserArt } from './teaserArt'
+import { getTeaserArt, getTeaserLook, subscribeTeaserArt, subscribeTeaserLook } from './teaserArt'
 
 function useArtTexture() {
   const tex = useMemo(() => {
@@ -89,6 +89,15 @@ function TeaserScene() {
   const glow = useMemo(() => ({ v: 0.2 }), [])
   const gl = useThree((s) => s.gl)
   const scene = useThree((s) => s.scene)
+  const group = useRef<THREE.Group>(null)
+  const [look, setLook] = useState(getTeaserLook)
+  useEffect(() => {
+    const off = subscribeTeaserLook(() => setLook(getTeaserLook()))
+    return () => {
+      off()
+    }
+  }, [])
+  const finish = useMemo(() => ({ color: look.color, metalness: look.metalness, roughness: look.roughness }), [look.color, look.metalness, look.roughness])
   useEffect(() => {
     const pmrem = new THREE.PMREMGenerator(gl)
     const tex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
@@ -101,12 +110,22 @@ function TeaserScene() {
     }
   }, [gl, scene])
 
-  useFrame(() => {
+  useFrame((state, dt) => {
+    const g = group.current
+    if (g) {
+      // Front sits square with a slow breath; Iso turns to show the USB-C edge and depth.
+      const t = state.clock.elapsedTime
+      const iso = look.view === 'iso'
+      const ry = (iso ? -0.62 : Math.sin(t * 0.5) * 0.08) + state.pointer.x * 0.12
+      const rx = (iso ? -0.42 : Math.sin(t * 0.37) * 0.04) - state.pointer.y * 0.08
+      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, ry, 5, dt)
+      g.rotation.x = THREE.MathUtils.damp(g.rotation.x, rx, 5, dt)
+    }
     const camera = cam.current
     if (!camera || size.width < 2) return
     const aspect = size.width / Math.max(1, size.height)
     const fov = 18
-    const dist = CARD.w / (0.9 * 2 * Math.tan((fov * Math.PI) / 360) * aspect)
+    const dist = CARD.w / (0.62 * 2 * Math.tan((fov * Math.PI) / 360) * aspect)
     camera.fov = fov
     camera.position.set(0, 0.05, dist)
     camera.lookAt(0, 0, 0)
@@ -119,7 +138,9 @@ function TeaserScene() {
       <ambientLight intensity={0.2} />
       <directionalLight position={[-4, 7, 6]} intensity={2.4} />
       <directionalLight position={[5, 2, 4]} intensity={0.4} />
-      <ProductCard print={print} glow={glow} />
+      <group ref={group}>
+        <ProductCard print={print} glow={glow} finish={finish} />
+      </group>
     </>
   )
 }

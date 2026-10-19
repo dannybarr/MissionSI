@@ -13,9 +13,9 @@ import {
 import type { TeaserPlacement } from '@/landing/lib/placement';
 import { editActive } from './edit-variant';
 import { earthMark, featureMark, initialsMark, wordmarkMark } from './features';
-import { DEFAULT_VIEW, defaultDesign, defaultProject, initialVariants, materialFromPreset, MAX_MARKS, newMarkId, trimFor, uid } from './presets';
+import { DEFAULT_VIEW, defaultDesign, defaultProject, initialVariants, MATERIALS, materialFromPreset, MAX_MARKS, newMarkId, trimFor, uid } from './presets';
 import { loadProject, loadView, saveProject, saveView, storageStatus, type LoadResult } from './storage';
-import type { BrandMark, CompId, Design, Project, Variant, ViewSettings } from './types';
+import type { BrandMark, CompId, Design, MaterialPreset, Project, Variant, ViewSettings } from './types';
 
 /* ---------------- history reducer ---------------- */
 
@@ -350,12 +350,19 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       commit('teaser:' + uid(), (p) => {
         const src = p.variants.find((v) => v.id === 'v-graphite') ?? p.variants[0];
         const design = structuredClone(src.design);
-        design.body = materialFromPreset('matteGraphite');
-        design.trim = trimFor('blackTitanium');
+        const finish = (placement.finish && placement.finish in MATERIALS ? placement.finish : 'matteGraphite') as MaterialPreset;
+        design.body = materialFromPreset(finish);
+        design.trim = trimFor(finish === 'matteGraphite' ? 'blackTitanium' : finish);
         const marks: BrandMark[] = [];
-        if (placement.wordmark) marks.push({ ...wordmarkMark(placement.wordmark.x, placement.wordmark.y), id: 'm-wordmark' });
+        // Text and finish chosen in the homepage preview carry over; anything unset keeps the studio default.
+        const style = (m: Omit<BrandMark, 'id'>, text?: string): Omit<BrandMark, 'id'> => ({
+          ...m,
+          ...(text ? { text } : {}),
+          ...(placement.markFinish ? { finish: placement.markFinish } : {}),
+        });
+        if (placement.wordmark) marks.push({ ...style(wordmarkMark(placement.wordmark.x, placement.wordmark.y), placement.wordmarkText), id: 'm-wordmark' });
         if (placement.earth) marks.push({ ...earthMark(placement.earth.x, placement.earth.y), id: 'm-earth' });
-        if (placement.initials) marks.push({ ...initialsMark(placement.initials.x, placement.initials.y), id: 'm-initials' });
+        if (placement.initials) marks.push({ ...style(initialsMark(placement.initials.x, placement.initials.y), placement.initialsText), id: 'm-initials' });
         for (const f of placement.features ?? []) marks.push({ ...featureMark(f.id, f.x, f.y), id: newMarkId() });
         design.marks = marks.slice(0, MAX_MARKS);
         const v: Variant = {
