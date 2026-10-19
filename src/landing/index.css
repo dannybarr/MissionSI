@@ -806,31 +806,25 @@ body:has(.mission-site) { background-color: #e7e7e7; }
 
 /* ---------- site grain: ghost.ai data-site-texture ---------- */
 body:has(.mission-site) { background-color: #e7e7e7; }
-/* Three scales of texture: soft tonal clouds, a cursor-following sheen, and a fine
-   film grain that re-seeds a few times a second so it reads as a material, not a filter. */
-.site-grain { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+/* A static backdrop behind every light chapter: one grey tonal gradient, soft clouds and a
+   fine grain. It sits beneath the content and never moves, so type and UI stay crisp. */
+.site-grain { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .site-grain-wash {
   position: absolute; inset: 0;
-  background:
-    radial-gradient(560px circle at var(--mx, 12%) var(--my, 18%), rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 70%),
-    radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.07) 100%);
-  mix-blend-mode: soft-light; transition: opacity 0.6s;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgb(14 15 16 / var(--connect-dark, 0)), rgb(14 15 16 / var(--connect-dark, 0))),
+    radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.05) 100%),
+    var(--grey-surface);
 }
-.site-grain-mottle {
-  position: absolute; inset: -20%; background-image: var(--grain-mottle); background-size: 100% 100%; background-repeat: no-repeat;
-  opacity: 0.16; mix-blend-mode: multiply; animation: mottle 90s linear infinite alternate;
-}
-.site-grain-dark, .site-grain-light { position: absolute; inset: -120px; background-size: 180px 180px; animation: grain 0.9s steps(6) infinite; }
-.site-grain-dark { background-image: var(--grain-dark); opacity: 0.42; }
-.site-grain-light { background-image: var(--grain-light); opacity: 0.12; animation-delay: -0.45s; }
-@keyframes grain {
-  0% { transform: translate(0, 0); } 17% { transform: translate(-47px, 31px); } 33% { transform: translate(38px, -62px); }
-  50% { transform: translate(-81px, -17px); } 67% { transform: translate(64px, 52px); } 83% { transform: translate(-22px, 88px); } 100% { transform: translate(0, 0); }
-}
-@keyframes mottle { from { transform: translate(0, 0) scale(1); } to { transform: translate(-6%, 4%) scale(1.08); } }
-.mission-site.reduced .site-grain-dark, .mission-site.reduced .site-grain-light, .mission-site.reduced .site-grain-mottle { animation: none; }
-@media (prefers-reduced-motion: reduce) { .site-grain * { animation: none !important; } }
-@media (max-width: 760px) { .site-grain-mottle { animation: none; } .opening-meta { display: none; } }
+.site-grain-mottle { position: absolute; inset: 0; background-image: var(--grain-mottle); background-size: 100% 100%; background-repeat: no-repeat; opacity: 0.14; mix-blend-mode: multiply; }
+.site-grain-dark, .site-grain-light { position: absolute; inset: 0; background-size: 180px 180px; }
+.site-grain-dark { background-image: var(--grain-dark); opacity: 0.34; }
+.site-grain-light { background-image: var(--grain-light); opacity: 0.22; }
+/* Light chapters let the static backdrop show through instead of repainting their own gradient. */
+.mission-site .statement, .mission-site .how, .mission-site .teaser, .mission-site .faq, .mission-site .close,
+.mission-site .site-footer, .mission-site .tray, .mission-site .captures { background: transparent; }
+@media (max-width: 760px) { .opening-meta { display: none; } }
 @media (max-width: 1180px) { .site-nav nav { gap: 16px; } }
 
 /* ---------- inside: shell splits, callouts, strip ---------- */
@@ -927,13 +921,14 @@ body:has(.mission-site) { background-color: #e7e7e7; }
 .sp { padding-bottom: clamp(56px, 9vh, 110px); }
 .sp-head { max-width: 760px; margin-bottom: clamp(28px, 5vh, 52px); }
 .sp-window {
-  --sp-bg: #121214; --sp-panel: #19191c; --sp-line: rgba(255, 255, 255, 0.07); --sp-text: #ecebe8; --sp-mute: rgba(236, 235, 232, 0.5); --sp-dim: rgba(236, 235, 232, 0.32);
-  position: relative; border-radius: 18px; overflow: hidden; background: var(--sp-bg); color: var(--sp-text);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 50px 90px -40px rgba(10, 10, 14, 0.55), 0 24px 40px -30px rgba(10, 10, 14, 0.5);
-  font-size: 14px; line-height: 1.35;
+  /* The real Studio's tokens (src/studio/index.css), so the preview reads as the same app. */
+  --sp-bg: #101113; --sp-panel: #141517; --sp-raise: #1b1c1f; --sp-line: #232528; --sp-input: #2e3034; --sp-text: #e3e1dc; --sp-mute: #9a9da3; --sp-dim: #6b6e74; --sp-signal: #ff6a1f; --sp-primary: #e8e6e1;
+  position: relative; border-radius: 12px; overflow: hidden; background: var(--sp-bg); color: var(--sp-text);
+  box-shadow: 0 0 0 1px #000, 0 30px 60px -36px rgba(10, 10, 14, 0.45);
+  font-size: 13px; line-height: 1.35;
 }
 .sp-window svg { width: 16px; height: 16px; flex: none; }
-.sp-bar { display: flex; align-items: center; gap: 22px; height: 60px; padding: 0 14px 0 20px; border-bottom: 1px solid var(--sp-line); white-space: nowrap; }
+.sp-bar { display: flex; align-items: center; gap: 22px; height: 56px; background: var(--sp-bg); padding: 0 14px 0 20px; border-bottom: 1px solid var(--sp-line); white-space: nowrap; }
 .sp-brand { display: flex; align-items: center; gap: 10px; letter-spacing: 0.16em; text-transform: uppercase; font-size: 13px; padding-right: 22px; border-right: 1px solid var(--sp-line); height: 100%; }
 .sp-brand svg { width: 20px; height: 20px; }
 .sp-brand span { color: var(--sp-dim); }
@@ -943,8 +938,8 @@ body:has(.mission-site) { background-color: #e7e7e7; }
 .sp-status i { width: 7px; height: 7px; border-radius: 50%; background: #7bd88f; box-shadow: 0 0 0 3px rgba(123, 216, 143, 0.15); animation: sp-pulse 2.4s ease-in-out infinite; }
 @keyframes sp-pulse { 50% { box-shadow: 0 0 0 6px rgba(123, 216, 143, 0); } }
 .sp-tools { display: flex; gap: 4px; margin-left: auto; }
-.sp-tools .sp-locked { padding: 8px 12px; border-radius: 8px; }
-.mission-site .sp-open { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px; background: #f4f3ef; color: #111; font-weight: 500; transition: background-color 0.3s, transform 0.5s var(--ease); }
+.sp-tools .sp-locked { padding: 8px 12px; border-radius: 6px; }
+.mission-site .sp-open { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 6px; background: var(--sp-primary); color: #111; font-weight: 500; transition: background-color 0.3s, transform 0.5s var(--ease); }
 .sp-open:hover { background: #fff; transform: translateY(-1px); }
 
 /* Locked controls: visible, slightly dimmed, with a quiet hover label. */
@@ -952,32 +947,32 @@ body:has(.mission-site) { background-color: #e7e7e7; }
 .sp-locked:hover, .sp-locked:focus-visible { color: var(--sp-text); background: rgba(255, 255, 255, 0.05); }
 .sp-lock-tip {
   position: absolute; z-index: 5; left: 50%; top: calc(100% + 6px); translate: -50% 4px; display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 9px; border-radius: 7px; background: #f4f3ef; color: #111; font-size: 11px; letter-spacing: 0.02em; white-space: nowrap;
+  padding: 5px 9px; border-radius: 6px; background: var(--sp-primary); color: var(--sp-bg); font-size: 11px; letter-spacing: 0.02em; white-space: nowrap;
   opacity: 0; pointer-events: none; transition: opacity 0.2s, translate 0.35s var(--ease);
 }
 .sp-lock-tip svg { width: 11px !important; height: 11px !important; }
 .sp-locked:hover .sp-lock-tip, .sp-locked:focus-visible .sp-lock-tip { opacity: 1; translate: -50% 0; }
 
 .sp-body { display: grid; grid-template-columns: 240px minmax(0, 1fr) 340px; min-height: clamp(560px, 70vh, 700px); }
-.sp-k { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sp-dim); }
-.sp-layers { border-right: 1px solid var(--sp-line); padding: 22px 12px 18px; display: flex; flex-direction: column; }
+.sp-k { margin: 0 0 6px; font-size: 10px; letter-spacing: 0.08em; font-weight: 500; text-transform: uppercase; color: var(--sp-dim); }
+.sp-layers { border-right: 1px solid var(--sp-line); background: var(--sp-panel); padding: 22px 12px 18px; display: flex; flex-direction: column; }
 .sp-layers .sp-k, .sp-title { padding: 0 10px; }
 .sp-title { margin: 0 0 16px; font-size: 16px; }
-.sp-tree-head { padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); color: var(--sp-text) !important; letter-spacing: 0.1em; text-transform: uppercase; font-size: 12px; }
+.sp-tree-head { padding: 10px; border-radius: 6px; background: var(--sp-raise); color: var(--sp-text) !important; letter-spacing: 0.1em; text-transform: uppercase; font-size: 12px; }
 .sp-tree-head em { margin-left: auto; font-style: normal; color: var(--sp-dim); }
 .sp-tree { list-style: none; margin: 6px 0 0; padding: 0 0 0 14px; border-left: 1px solid var(--sp-line); margin-left: 18px; }
-.sp-tree .sp-locked { padding: 8px 10px; border-radius: 7px; }
+.sp-tree .sp-locked { padding: 8px 10px; border-radius: 6px; }
 .sp-tree .sp-lock-tip { left: auto; right: 6px; top: 50%; translate: 4px -50%; }
 .sp-tree .sp-locked:hover .sp-lock-tip { translate: 0 -50%; }
 .sp-foot { margin: auto 0 0; padding: 16px 10px 0; color: var(--sp-dim); font-size: 12px; }
 
-.sp-stage { position: relative; display: flex; flex-direction: column; background: radial-gradient(90% 80% at 50% 45%, #f1f0ee, #e3e2df); color: #1a1a1c; }
+.sp-stage { position: relative; display: flex; flex-direction: column; background: #e7e6e3; color: #1a1a1c; }
 .sp-toolbar { position: absolute; z-index: 3; top: 16px; left: 16px; right: 16px; display: flex; gap: 10px; flex-wrap: wrap; pointer-events: none; }
 .sp-toolbar > * { pointer-events: auto; }
-.sp-seg { display: inline-flex; align-items: center; gap: 2px; padding: 4px; border-radius: 10px; background: #18181b; color: var(--sp-mute); box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.5); }
-.sp-seg > span, .sp-seg > button, .sp-seg > a { padding: 7px 11px; border-radius: 7px; border: 0; background: transparent; color: inherit; font-size: 13px; cursor: pointer; }
+.sp-seg { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 6px; background: var(--sp-panel); color: var(--sp-mute); box-shadow: 0 0 0 1px var(--sp-line); }
+.sp-seg > span, .sp-seg > button, .sp-seg > a { padding: 6px 10px; border-radius: 4px; border: 0; background: transparent; color: inherit; font-size: 13px; cursor: pointer; }
 .sp-seg > span { cursor: default; }
-.sp-seg .is-on { background: rgba(255, 255, 255, 0.1); color: var(--sp-text); }
+.sp-seg .is-on { background: var(--sp-input); color: var(--sp-text); }
 .sp-seg button:hover { color: var(--sp-text); }
 .sp-seg-icons { margin-left: auto; }
 .sp-seg-icons .sp-locked { padding: 7px 9px; }
@@ -987,26 +982,26 @@ body:has(.mission-site) { background-color: #e7e7e7; }
 .sp-meta { display: flex; justify-content: space-between; gap: 16px; padding: 12px 18px; font-size: 12px; color: rgba(26, 26, 28, 0.55); border-top: 1px solid rgba(20, 20, 22, 0.06); }
 
 .sp-panel { border-left: 1px solid var(--sp-line); padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 10px; background: var(--sp-panel); }
-.sp-tabs { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 12px; background: #111113; }
-.sp-tabs > * { justify-content: center; padding: 11px; border-radius: 9px; font-size: 14px; }
-.sp-tabs .is-on { background: #f4f3ef; color: #111; text-align: center; }
+.sp-tabs { display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: 6px; background: var(--sp-bg); box-shadow: 0 0 0 1px var(--sp-line); }
+.sp-tabs > * { justify-content: center; padding: 9px; border-radius: 4px; font-size: 13px; }
+.sp-tabs .is-on { background: var(--sp-primary); color: var(--sp-bg); text-align: center; }
 .sp-hint { margin: 0 0 8px; color: var(--sp-dim); font-size: 12px; }
 .sp-swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; }
 .sp-swatch { display: grid; gap: 7px; padding: 0; border: 0; background: none; color: var(--sp-mute); font-size: 12px; text-align: center; cursor: pointer; transition: color 0.2s; }
-.sp-swatch span { height: 46px; border-radius: 9px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); transition: box-shadow 0.25s, transform 0.5s var(--ease); }
+.sp-swatch span { height: 46px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); transition: box-shadow 0.25s, transform 0.5s var(--ease); }
 .sp-swatch:hover span { transform: translateY(-2px); }
 .sp-swatch.is-on { color: var(--sp-text); }
-.sp-swatch.is-on span { box-shadow: 0 0 0 2px var(--sp-panel), 0 0 0 4px #d97757; }
+.sp-swatch.is-on span { box-shadow: 0 0 0 2px var(--sp-panel), 0 0 0 3.5px var(--sp-signal); }
 .sp-field { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 10px; color: var(--sp-mute); font-size: 13px; }
-.mission-site .sp-field input { height: 42px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--sp-line); background: #111113; color: var(--sp-text); outline: none; transition: border-color 0.2s; }
-.sp-field input:focus { border-color: rgba(217, 119, 87, 0.8); }
-.sp-seg-full { display: grid; grid-template-columns: repeat(3, 1fr); background: #111113; margin-top: 2px; }
+.mission-site .sp-field input { height: 38px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--sp-input); background: var(--sp-bg); color: var(--sp-text); outline: none; transition: border-color 0.2s; }
+.sp-field input:focus { border-color: var(--sp-signal); box-shadow: 0 0 0 3px rgb(255 106 31 / 0.18); }
+.sp-seg-full { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--sp-bg); margin-top: 2px; }
 .sp-seg-full button { text-align: center; }
-.sp-modules { margin-top: 8px; padding: 14px; border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.12); font-size: 12px; line-height: 1.45; }
+.sp-modules { margin-top: 8px; padding: 14px; border-radius: 6px; border: 1px dashed var(--sp-input); font-size: 12px; line-height: 1.45; }
 .sp-modules b { display: block; color: var(--sp-text); font-weight: 500; font-size: 13px; margin-bottom: 2px; }
 .sp-modules > span:first-child { display: block; }
 .sp-modules .sp-lock-tip { top: 10px; right: 10px; left: auto; translate: 0 0; opacity: 0.9; }
-.mission-site .sp-cta { margin-top: auto; width: 100%; background: #f4f3ef; color: #111; box-shadow: none; }
+.mission-site .sp-cta { margin-top: auto; width: 100%; min-height: 42px; border-radius: 6px; background: var(--sp-primary); color: var(--sp-bg); box-shadow: none; }
 .mission-site .sp-cta:hover { background: #fff; }
 .sp-fine { max-width: 60em; margin: 18px 0 0; }
 
