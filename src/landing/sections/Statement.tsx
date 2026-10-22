@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { EASE, gsap, prefersStatic } from '@/landing/lib/motion'
+import { Custody, addCustody, settleCustody } from '@/landing/sections/Custody'
 
 const LINES = ['Your memory.', 'Any agent.', 'Nobody else.']
 
@@ -20,7 +21,11 @@ export function Statement({ reduced }: { reduced: boolean }) {
   useEffect(() => {
     const section = root.current
     const row = track.current
-    if (!section || !row || reduced || prefersStatic()) return
+    if (!section || !row) return
+    if (reduced || prefersStatic()) {
+      settleCustody(section)
+      return
+    }
     const words = section.querySelectorAll<HTMLElement>('[data-word]')
     const facts = row.querySelectorAll<HTMLElement>('.fact')
     const ctx = gsap.context(() => {
@@ -28,17 +33,19 @@ export function Statement({ reduced }: { reduced: boolean }) {
         scrollTrigger: {
           trigger: section,
           start: 'top top',
-          end: '+=260%',
+          end: '+=300%',
           pin: true,
           scrub: 0.8,
           anticipatePin: 1,
           invalidateOnRefresh: true,
         },
       })
+      // The custody story plays beside the headline while its words light up.
+      const told = addCustody(tl, section, 0)
       words.forEach((word, i) => {
-        tl.fromTo(word, { opacity: 0.14, yPercent: 14 }, { opacity: 1, yPercent: 0, duration: 0.7, ease: EASE.inOut }, i * 0.26)
+        tl.fromTo(word, { opacity: 0.14, yPercent: 14 }, { opacity: 1, yPercent: 0, duration: 0.7, ease: EASE.inOut }, 0.2 + i * 0.5)
       })
-      tl.from(facts, { yPercent: 18, rotation: 2, opacity: 0, duration: 0.5, stagger: 0.07, ease: EASE.out }, '-=0.4')
+      tl.from(facts, { yPercent: 18, rotation: 2, opacity: 0, duration: 0.5, stagger: 0.07, ease: EASE.out }, told)
       tl.to({}, { duration: 0.15 })
       tl.to(row, {
         x: () => -Math.max(0, row.scrollWidth - section.clientWidth + 48),
@@ -55,17 +62,20 @@ export function Statement({ reduced }: { reduced: boolean }) {
         <p className="eyebrow">
           <i /> The point
         </p>
-        <h2 className="statement-lines">
-          {LINES.map((line) => (
-            <span key={line} className="statement-line">
-              {line.split(' ').map((word) => (
-                <span key={word} data-word style={reduced ? { opacity: 1 } : undefined}>
-                  {word}
-                </span>
-              ))}
-            </span>
-          ))}
-        </h2>
+        <div className="statement-head">
+          <h2 className="statement-lines">
+            {LINES.map((line) => (
+              <span key={line} className="statement-line">
+                {line.split(' ').map((word) => (
+                  <span key={word} data-word style={reduced ? { opacity: 1 } : undefined}>
+                    {word}
+                  </span>
+                ))}
+              </span>
+            ))}
+          </h2>
+          <Custody reduced={reduced} />
+        </div>
         <div className="h-scroll" ref={track}>
           {FACTS.map((f, i) => (
             <article key={f.k} className="fact">

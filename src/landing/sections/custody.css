@@ -1,0 +1,20 @@
+/* ---------- statement: custody illustration ---------- */
+.statement-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: clamp(24px, 4vw, 72px); }
+.custody { position: relative; margin: 0; justify-self: end; width: 100%; max-width: 560px; display: grid; justify-items: center; }
+.custody-art { display: block; width: 100%; height: auto; max-height: 44svh; overflow: visible; }
+.custody-art .cs-cloud { filter: drop-shadow(0 10px 14px rgba(70, 96, 130, 0.12)); }
+.cs-tag-text { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.16em; fill: #e3e1dc; }
+.custody-notes { display: grid; margin-top: 4px; min-height: 2.6em; text-align: center; }
+.custody-note { grid-area: 1 / 1; font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); line-height: 1.3; }
+.custody-note + .custody-note { visibility: hidden; }
+.custody.is-still .custody-note:first-child { display: none; }
+.custody.is-still .custody-note + .custody-note { visibility: visible; }
+
+@media (max-width: 900px) {
+  .statement-head { grid-template-columns: 1fr; gap: 6px; }
+  .custody { order: -1; justify-self: center; max-width: 380px; }
+  .custody-art { max-height: 25svh; }
+  .custody-notes { min-height: 2.4em; }
+  .custody-note { font-size: 11.5px; }
+  .statement .h-scroll { margin-top: 5vh; }
+}

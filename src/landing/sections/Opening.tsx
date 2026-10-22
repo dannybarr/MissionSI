@@ -3,7 +3,7 @@ import { gsap, prefersStatic } from '@/landing/lib/motion'
 import { CardFace } from '@/landing/components/CardFace'
 import { Magnetic } from '@/landing/components/Magnetic'
 import { pose, signals } from '@/landing/three/pose'
-import { phase, productMotion } from '@/landing/three/productMotion'
+import { productMotion } from '@/landing/three/productMotion'
 import { Hero } from './Hero'
 
 export function Opening({ reduced }: { reduced: boolean }) {
@@ -27,8 +27,6 @@ export function Opening({ reduced }: { reduced: boolean }) {
     Object.assign(pose, productMotion(0))
     pose.tiltX = 0
     pose.tiltY = 0
-    pose.cam = 0
-    pose.settle = 0
     pose.nudge = 0
     pose.spinning = 0
     signals.onReady = () => setReady(true)
@@ -75,10 +73,7 @@ export function Opening({ reduced }: { reduced: boolean }) {
       trayEl.style.opacity = String(next.trayCopy)
       trayEl.style.translate = `0 ${(1 - next.trayCopy) * 12}px`
       view.style.opacity = '1'
-      el.style.setProperty('--connection-caption', String(next.connection))
-      document.documentElement.style.setProperty('--connect-dark', String(phase(progress.value, 0.32, 0.37) * (1 - phase(progress.value, 0.64, 0.71))))
-      pose.inspection = phase(progress.value, 0.24, 0.4)
-      el.style.setProperty('--inspection', String(pose.inspection))
+      el.style.setProperty('--inspection', String(next.inspection))
     }
     const ctx = gsap.context(() => {
       gsap.to(progress, {
@@ -88,10 +83,10 @@ export function Opening({ reduced }: { reduced: boolean }) {
         scrollTrigger: {
         trigger: el,
         start: 'top top',
-        end: () => `+=${window.innerHeight * (window.innerWidth < 760 ? 3.2 : 3.8)}`,
+        end: () => `+=${window.innerHeight * (window.innerWidth < 760 ? 2.2 : 2.4)}`,
         pin: pinned,
-        scrub: 0.65,
-        anticipatePin: 1,
+        // Lenis already smooths the scroll; a second scrub lag made the card trail the page.
+        scrub: true,
         invalidateOnRefresh: true,
         },
       })
@@ -136,7 +131,6 @@ export function Opening({ reduced }: { reduced: boolean }) {
       unregister()
       release()
       signals.onReady = () => {}
-      document.documentElement.style.removeProperty('--connect-dark')
     }
   }, [reduced])
 
@@ -148,7 +142,6 @@ export function Opening({ reduced }: { reduced: boolean }) {
     <section className={`opening ${ready ? 'is-ready' : ''}`} id="top" ref={section}>
       <div className="opening-pin" ref={pin}>
         <div className="opening-view" ref={track} />
-        <p className="opening-connection-caption">A physical connection.<br /><span>Your memory, within reach.</span></p>
         <div className="opening-copy" ref={copy}>
           <p className="eyebrow" data-testid="status-prototype" data-reveal data-reveal-now data-delay="0.15">
             <i />

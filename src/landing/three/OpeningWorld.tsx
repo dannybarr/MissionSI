@@ -9,7 +9,6 @@ import { drawHeroPrint, printPlaneSize } from './print'
 import { ProductCard } from './ProductCard'
 import { KeyFob } from './KeyFob'
 import { AirPods } from './AirPods'
-import { ConnectionRig } from './ConnectionRig'
 
 const TRAY_Y = -19
 const hero = new THREE.Vector3()
@@ -17,6 +16,10 @@ const slot = new THREE.Vector3()
 const look = new THREE.Vector3()
 const lookT = new THREE.Vector3()
 const camPos = new THREE.Vector3()
+const arc = new THREE.Vector3()
+const cardPos = new THREE.Vector3()
+const tangent = new THREE.Vector3()
+const bankQ = new THREE.Quaternion()
 
 function StudioEnv() {
   const gl = useThree((s) => s.gl)
@@ -175,6 +178,11 @@ function Tray() {
 /** The supplied photograph is the actual surface of the tray in the 3D sequence. */
 function PhotoTray() {
   const [photo, setPhoto] = useState<THREE.CanvasTexture | null>(null)
+  const mat = useRef<THREE.MeshBasicMaterial>(null)
+  // The tray fades up as it rises, so it never slides in past a hard edge of the view.
+  useFrame(() => {
+    if (mat.current) mat.current.opacity = THREE.MathUtils.smoothstep(pose.cam, 0.18, 0.7)
+  })
   useEffect(() => {
     let live = true
     const img = new Image()
@@ -207,7 +215,7 @@ function PhotoTray() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]} receiveShadow>
       <planeGeometry args={[width, depth]} />
-      <meshBasicMaterial map={photo} transparent depthWrite={false} side={THREE.DoubleSide} />
+      <meshBasicMaterial ref={mat} map={photo} transparent depthWrite={false} side={THREE.DoubleSide} />
     </mesh>
   )
 }
@@ -316,6 +324,8 @@ export function OpeningScene() {
   const tray = useRef<THREE.Group>(null)
   const heroShadow = useRef<THREE.Mesh>(null)
   const heroShadowMat = useRef<THREE.MeshBasicMaterial>(null)
+  const landShadow = useRef<THREE.Mesh>(null)
+  const landShadowMat = useRef<THREE.MeshBasicMaterial>(null)
   const light = useRef<THREE.DirectionalLight>(null)
   const lightTarget = useMemo(() => new THREE.Object3D(), [])
   const size = useThree((s) => s.size)
@@ -343,7 +353,8 @@ export function OpeningScene() {
     const visW = CARD.w / fraction
     const visH = visW / aspect
     const t = pose.cam
-    const lay = t * t * (3 - 2 * t)
+    const lay = pose.lay
+    const flat = pose.flat
     const cardX = 0
     const cardY = mobile ? 0 : 0.15
     // Arrival: the card comes forward out of depth with a quarter turn, then floats.
@@ -353,14 +364,22 @@ export function OpeningScene() {
     const idle = 1 - pose.inspection
     const trayX = 3.4
     hero.set(cardX, cardY, 0)
-    slot.set(trayX - 21.5, TRAY_Y + 0.28 + CARD.t / 2 + 0.012 + pose.settle, 0)
-    const cardPos = hero.lerp(slot, lay)
-    look.set(THREE.MathUtils.lerp(0, cardX - (mobile ? 5.2 : 7.8), pose.connection), cardY + (mobile ? visH * 0.22 : -visH * 0.21) * idle, 0)
+    slot.set(trayX - 21.5, TRAY_Y + 0.28 + CARD.t / 2 + 0.012, 0)
+    // The glide is a curve, not a straight drop: the card swings out towards the viewer,
+    // then arcs down and across into its place beside the tray.
+    arc.set(
+      THREE.MathUtils.lerp(hero.x, slot.x, 0.18) + (mobile ? 2.5 : 5),
+      THREE.MathUtils.lerp(hero.y, slot.y, 0.12),
+      mobile ? 5 : 8,
+    )
+    const u = 1 - lay
+    cardPos.set(0, 0, 0).addScaledVector(hero, u * u).addScaledVector(arc, 2 * u * lay).addScaledVector(slot, lay * lay)
+    tangent.set(0, 0, 0).addScaledVector(arc, 1 - lay).addScaledVector(hero, lay - 1).addScaledVector(slot, lay).addScaledVector(arc, -lay)
+    look.set(0, cardY + (mobile ? visH * 0.22 : -visH * 0.21) * idle, 0)
     lookT.set(trayX - 8, TRAY_Y + (mobile ? -4.8 : 0.5), 0.2)
     look.lerp(lookT, t)
     const elev = THREE.MathUtils.lerp(0.07, 1.34, t)
-    const connectionDistance = Math.max(dist, (mobile ? 21 : 34) / (2 * Math.tan((fov * Math.PI) / 360) * aspect))
-    const distNow = THREE.MathUtils.lerp(THREE.MathUtils.lerp(dist, connectionDistance, pose.connection), mobile ? 125 : 104, t)
+    const distNow = THREE.MathUtils.lerp(dist, mobile ? 125 : 104, t)
     camPos.set(look.x, look.y + Math.sin(elev) * distNow, look.z + Math.cos(elev) * distNow)
     camera.position.copy(camPos)
     camera.lookAt(look)
@@ -368,18 +387,28 @@ export function OpeningScene() {
     camera.updateProjectionMatrix()
 
     const g = card.current
-    if (tray.current) tray.current.position.y = TRAY_Y - 20 * (1 - lay)
+    if (tray.current) tray.current.position.y = TRAY_Y - 20 * (1 - t)
+    // How far the card is from lying flat. It lays itself down a beat after arriving,
+    // so it touches on one long edge, rolls flat and rocks once, lifted so it never
+    // passes through the tray.
+    const tip = (Math.PI / 2 + pose.pitch) * (1 - flat) - pose.rock
+    const lift = (CARD.h / 2) * Math.abs(Math.sin(tip)) * lay
     if (g) {
       const e = state.clock.elapsedTime
       const away = (1 - intro) * (1 - lay)
       g.position.copy(cardPos)
-      g.position.y += Math.sin(e * 0.9) * 0.07 * idle * intro - away * 1.2
+      g.position.y += Math.sin(e * 0.9) * 0.07 * idle * intro - away * 1.2 + lift
       g.position.z -= away * 22
       g.rotation.order = 'YXZ'
-      g.rotation.y = (pose.spin + pose.tiltY + Math.sin(e * 0.45) * 0.035 * idle - away * 1.4) * (1 - lay)
-      g.rotation.x = (pose.pitch + pose.tiltX) * (1 - lay) - (Math.PI / 2) * lay
+      g.rotation.y = (pose.spin + pose.tiltY + Math.sin(e * 0.45) * 0.035 * idle - away * 1.4) * (1 - flat)
+      g.rotation.x = (pose.pitch + pose.tiltX) * (1 - flat) - (Math.PI / 2) * flat + pose.rock
       // In-plane yaw keeps the card flat at contact, rather than burying one edge.
-      g.rotation.z = -0.04 * (1 - lay) - 0.14 * lay
+      g.rotation.z = -0.04 * (1 - flat) - 0.14 * flat
+      // Bank: roll about the direction of travel, leaning into the curve.
+      if (pose.bank > 0.0005 && tangent.lengthSq() > 1e-6) {
+        bankQ.setFromAxisAngle(tangent.normalize(), 0.34 * pose.bank)
+        g.quaternion.premultiply(bankQ)
+      }
     }
     if (light.current) {
       light.current.position.set(cardPos.x - 8, cardPos.y + 16, cardPos.z + 10)
@@ -392,8 +421,20 @@ export function OpeningScene() {
       const facing = Math.abs(Math.cos(pose.spin))
       shade.position.set(cardPos.x + 0.7 * (1 - lay), cardPos.y - (2.15 + facing * 0.45) * (1 - lay), -0.9)
       shade.scale.set(3.1 + facing * 2.8 + t * 1.5, 1.15 + facing * 2.1 + t * 0.7, 1)
-      shadeMat.opacity = (0.26 + facing * 0.19) * (1 - pose.cam * 0.55) * Math.max(intro, pose.cam)
+      shadeMat.opacity = (0.26 + facing * 0.19) * (1 - t) * intro
       shade.visible = t < 0.97
+    }
+    // Contact shadow on the tray: wide and faint while the card is high, tightening and
+    // darkening as it comes down, so the landing reads as weight arriving.
+    const land = landShadow.current
+    const landMat = landShadowMat.current
+    if (land && landMat) {
+      const height = Math.max(0, g ? g.position.y - slot.y : 0)
+      const near = Math.max(0, 1 - height / 14)
+      land.position.set(slot.x + 0.35, slot.y - CARD.t / 2 + 0.02, slot.z + 0.45)
+      land.scale.set(CARD.w * (1.45 + height * 0.06), CARD.h * (1.6 + height * 0.06), 1)
+      landMat.opacity = near * near * 0.75 * t
+      land.visible = landMat.opacity > 0.004
     }
     const heroIdle = t < 0.2 && pose.spinning < 0.5
     glow.v = heroIdle ? 0.45 + Math.sin(state.clock.elapsedTime * 1.35) * 0.2 : Math.max(0, 0.85 - t * 1.1)
@@ -430,6 +471,10 @@ export function OpeningScene() {
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial ref={heroShadowMat} map={blob} transparent depthWrite={false} opacity={0.3} />
       </mesh>
+      <mesh ref={landShadow} rotation={[-Math.PI / 2, 0, -0.14]} renderOrder={1} visible={false}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial ref={landShadowMat} map={blob} transparent depthWrite={false} opacity={0} />
+      </mesh>
       <group ref={tray} position={[3.4, TRAY_Y - 20, 0]}>
         <PhotoTray />
         <group visible={false}>
@@ -443,7 +488,6 @@ export function OpeningScene() {
       </group>
       <group ref={card}>
         <ProductCard print={print} glow={glow} />
-        <ConnectionRig />
       </group>
     </>
   )

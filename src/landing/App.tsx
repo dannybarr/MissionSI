@@ -6,7 +6,6 @@ import { Opening } from '@/landing/sections/Opening'
 import { Tray } from '@/landing/sections/Tray'
 import { Statement } from '@/landing/sections/Statement'
 import { Flags } from '@/landing/sections/Flags'
-import { Forest } from '@/landing/sections/Forest'
 import { HowItWorks } from '@/landing/sections/HowItWorks'
 import { StudioTeaser } from '@/landing/sections/StudioTeaser'
 import { PlugSequence } from '@/landing/sections/PlugSequence'
@@ -104,7 +103,6 @@ export default function LandingApp() {
         <Flags reduced={reduced} />
         <OpenCard reduced={reduced} />
         <Captures reduced={reduced} />
-        <Forest reduced={reduced} />
         <HowItWorks reduced={reduced} />
         <StudioTeaser reduced={reduced} />
         <PlugSequence reduced={reduced} />
