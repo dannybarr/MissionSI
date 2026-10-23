@@ -10,12 +10,29 @@ const CLOUDS = [
   { x: 6, y: 172, s: 0.72, from: -1 },
 ]
 
-/** Centre of the case opening, in viewBox units. A cloud box is 160 x 84, scaled about its centre. */
-const MOUTH = { x: 320 - 80, y: 262 - 46 }
-const SINK = 318 - 46
+/**
+ * Case geometry, in viewBox units. Every shape is drawn from these edges so the lid,
+ * body and hardware meet exactly. Corner radii share one family: 14 outside, 8 inside.
+ */
+const L = 168
+const R = 472
+const TOP = 236 // far edge of the lid's top face
+const LID = 252 // where the top face meets the lid front
+const SEAM = 292 // lid front meets body
+const BASE = 404 // bottom of the body
+const FLOOR = 409 // underside of the feet
+const HINGE = 246 // the lid's back hinge, as seen from the front
+const CLASPS = [222, 418]
+const LATCH_PIVOT = 298
 
-/** A vertical squash about a horizontal hinge line at y, as a plain SVG matrix so it scrubs cleanly to near zero. */
+/** Centre of the case opening. A cloud box is 160 x 84, scaled about its centre. */
+const MOUTH = { x: 320 - 80, y: 268 - 46 }
+const SINK = 340 - 46
+
+/** A vertical squash about a horizontal line at y, as a plain SVG matrix so it scrubs cleanly to near zero. */
 const hinge = (s: number, y: number) => `matrix(1 0 0 ${s} 0 ${(y * (1 - s)).toFixed(3)})`
+/** A horizontal stretch about the case's centre line, for the ground shadow. */
+const spread = (s: number) => `matrix(${s} 0 0 1 ${(320 * (1 - s)).toFixed(3)} 0)`
 
 /**
  * Adds the custody story to the Statement timeline: memory scattered across clouds,
@@ -29,9 +46,9 @@ export function addCustody(tl: gsap.core.Timeline, root: HTMLElement, at = 0) {
   const caseParts = q('.cs-case')
   const lidClosed = q('.cs-lid-closed')
   const lidOpen = q('.cs-lid-open')
-  const latches = q('.cs-latch')
-  const shadow = q('.cs-ground')
-  const art = q('.custody-art')
+  const [latchL, latchR] = q('.cs-latch')
+  const contact = q('.cs-contact')
+  const ambient = q('.cs-ambient')
   const [before, after] = q('.custody-note')
 
   // Independent idle drift, on an inner group so the scrubbed timeline owns the outer transform.
@@ -39,10 +56,21 @@ export function addCustody(tl: gsap.core.Timeline, root: HTMLElement, at = 0) {
     gsap.to(el, { y: i % 2 ? 7 : -7, x: i % 2 ? -4 : 5, duration: 2.6 + i * 0.45, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: i * 0.3 })
   })
 
-  // Hinges and pivots are fixed once, at full scale, so later squashes cannot skew them.
-  gsap.set(shadow, { svgOrigin: '320 412' })
-  latches.forEach((el) => gsap.set(el, { transformOrigin: '50% 100%' }))
-  gsap.set(art, { transformOrigin: '50% 92%' })
+  // The case is four layers (clouds pass between them), so one pose drives all four as a single matrix,
+  // pivoting on the middle of its feet. Tilt is in degrees.
+  const pose = { y: 0, tilt: 0, sx: 1, sy: 1 }
+  const place = () => {
+    const r = (pose.tilt * Math.PI) / 180
+    const a = Math.cos(r) * pose.sx
+    const b = Math.sin(r) * pose.sx
+    const c = -Math.sin(r) * pose.sy
+    const d = Math.cos(r) * pose.sy
+    const e = 320 - a * 320 - c * FLOOR
+    const f = FLOOR + pose.y - b * 320 - d * FLOOR
+    const m = `matrix(${a.toFixed(5)} ${b.toFixed(5)} ${c.toFixed(5)} ${d.toFixed(5)} ${e.toFixed(3)} ${f.toFixed(3)})`
+    caseParts.forEach((el) => el.setAttribute('transform', m))
+  }
+  const move = (vars: gsap.TweenVars, t: number) => tl.to(pose, { ...vars, onUpdate: place }, t)
 
   // 1. Memory, scattered across other people's clouds.
   clouds.forEach((el, i) => {
@@ -56,36 +84,52 @@ export function addCustody(tl: gsap.core.Timeline, root: HTMLElement, at = 0) {
   })
   tl.fromTo(before, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: EASE.out }, at + 0.2)
 
-  // 2. The case arrives, closed.
-  tl.fromTo(caseParts, { y: 150, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, ease: EASE.arrive }, at + 0.7)
-  tl.fromTo(shadow, { scaleX: 0.4, autoAlpha: 0 }, { scaleX: 1, autoAlpha: 1, duration: 0.6, ease: EASE.arrive }, at + 0.7)
+  // 2. The case drops in with some weight, lands slightly tilted and rocks level.
+  const land = at + 0.7
+  tl.fromTo(pose, { y: -70, tilt: -2, sx: 1, sy: 1 }, { y: 0, tilt: 1.4, duration: 0.42, ease: 'power2.in', onUpdate: place, immediateRender: true }, land)
+  tl.fromTo(caseParts, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16, ease: 'none' }, land)
+  tl.fromTo(contact, { autoAlpha: 0, attr: { transform: spread(0.55) } }, { autoAlpha: 1, attr: { transform: spread(1) }, duration: 0.42, ease: 'power2.in' }, land)
+  tl.fromTo(ambient, { autoAlpha: 0, attr: { transform: spread(1.3) } }, { autoAlpha: 1, attr: { transform: spread(1) }, duration: 0.42, ease: 'power1.in' }, land)
+  move({ sx: 1.018, sy: 0.975, tilt: -0.6, duration: 0.07, ease: 'power2.out' }, land + 0.42)
+  move({ sx: 1, sy: 1, tilt: 0, duration: 0.3, ease: 'back.out(2.2)' }, land + 0.49)
 
-  // 3. Clasps pop, lid swings back on its hinge.
-  tl.fromTo(latches, { scaleY: 1 }, { scaleY: 0.18, duration: 0.18, ease: 'power2.in', stagger: 0.06 }, at + 1.32)
-  tl.fromTo(lidClosed, { attr: { transform: hinge(1, 250) } }, { attr: { transform: hinge(0.001, 250) }, duration: 0.24, ease: 'power2.in' }, at + 1.52)
-  tl.fromTo(lidOpen, { autoAlpha: 0, attr: { transform: hinge(0.001, 254) } }, { autoAlpha: 1, attr: { transform: hinge(1, 254) }, duration: 0.3, ease: 'power2.out' }, at + 1.76)
+  // 3. Clasps pop open on their lower hinges, then the lid swings back on its rear hinge.
+  const open = at + 1.36
+  tl.fromTo(latchL, { attr: { transform: hinge(1, LATCH_PIVOT) } }, { attr: { transform: hinge(0.2, LATCH_PIVOT) }, duration: 0.1, ease: 'back.out(2.6)' }, open)
+  tl.fromTo(latchR, { attr: { transform: hinge(1, LATCH_PIVOT) } }, { attr: { transform: hinge(0.2, LATCH_PIVOT) }, duration: 0.1, ease: 'back.out(2.6)' }, open + 0.06)
+  tl.fromTo(lidClosed, { attr: { transform: hinge(1, HINGE) } }, { attr: { transform: hinge(0.001, HINGE) }, duration: 0.2, ease: 'power1.in' }, open + 0.2)
+  tl.fromTo(
+    lidOpen,
+    { attr: { transform: hinge(0.001, HINGE) } },
+    { attr: { transform: hinge(1, HINGE) }, duration: 0.34, ease: 'power3.out' },
+    open + 0.4,
+  )
 
   // 4. Each cloud is drawn in, squashed through the opening and stuffed down out of sight.
+  //    The case gives a little as each one lands inside.
   const order = [2, 0, 3, 1, 4]
   order.forEach((idx, n) => {
     const el = clouds[idx]
     const c = CLOUDS[idx]
     const t = at + 2.1 + n * 0.22
-    tl.to(el, { x: MOUTH.x, y: MOUTH.y - 40, scaleX: c.s * 0.8, scaleY: c.s * 0.8, duration: 0.3, ease: EASE.inOut }, t)
-    tl.to(el, { y: MOUTH.y, scaleX: 0.86, scaleY: 0.34, duration: 0.14, ease: 'power2.in' }, t + 0.3)
-    tl.to(el, { y: SINK, scaleX: 0.62, scaleY: 0.26, duration: 0.12, ease: 'power1.in' }, t + 0.44)
+    tl.to(el, { x: MOUTH.x, y: MOUTH.y - 46, scaleX: c.s * 0.84, scaleY: c.s * 0.84, duration: 0.3, ease: EASE.inOut }, t)
+    tl.to(el, { y: MOUTH.y, scaleX: 0.9, scaleY: 0.36, duration: 0.14, ease: 'power2.in' }, t + 0.3)
+    tl.to(el, { y: SINK, scaleX: 0.66, scaleY: 0.26, duration: 0.12, ease: 'power1.in' }, t + 0.44)
     tl.set(el, { autoAlpha: 0 }, t + 0.56)
+    move({ sx: 1.01, sy: 0.984, duration: 0.05, ease: 'power2.out' }, t + 0.48)
+    move({ sx: 1, sy: 1, duration: 0.14, ease: 'back.out(3)' }, t + 0.53)
   })
   tl.to(before, { autoAlpha: 0, y: -8, duration: 0.3, ease: EASE.inOut }, at + 2.4)
 
-  // 5. Lid shuts, clasps clamp, and the full case settles.
+  // 5. The lid accelerates shut, the case takes the impact, then the clasps snap down left, right.
   const shut = at + 3.3
-  tl.to(lidOpen, { attr: { transform: hinge(0.001, 254) }, duration: 0.2, ease: 'power2.in' }, shut)
+  tl.to(lidOpen, { attr: { transform: hinge(0.001, HINGE) }, duration: 0.2, ease: 'power3.in' }, shut)
   tl.set(lidOpen, { autoAlpha: 0 }, shut + 0.2)
-  tl.to(lidClosed, { attr: { transform: hinge(1, 250) }, duration: 0.18, ease: 'power2.out' }, shut + 0.2)
-  tl.to(art, { scaleX: 1.02, scaleY: 0.97, duration: 0.08, ease: 'power2.out' }, shut + 0.36)
-  tl.to(art, { scaleX: 1, scaleY: 1, duration: 0.26, ease: 'back.out(3)' }, shut + 0.44)
-  tl.to(latches, { scaleY: 1, duration: 0.22, ease: 'back.out(4)', stagger: 0.07 }, shut + 0.44)
+  tl.to(lidClosed, { attr: { transform: hinge(1, HINGE) }, duration: 0.1, ease: 'power2.in' }, shut + 0.2)
+  move({ sx: 1.022, sy: 0.968, duration: 0.05, ease: 'power2.out' }, shut + 0.3)
+  move({ sx: 1, sy: 1, duration: 0.26, ease: 'back.out(3)' }, shut + 0.35)
+  tl.to(latchL, { attr: { transform: hinge(1, LATCH_PIVOT) }, duration: 0.1, ease: 'back.out(3.5)' }, shut + 0.42)
+  tl.to(latchR, { attr: { transform: hinge(1, LATCH_PIVOT) }, duration: 0.1, ease: 'back.out(3.5)' }, shut + 0.48)
   tl.fromTo(after, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: EASE.out }, shut + 0.4)
 
   return shut + 0.8
@@ -100,6 +144,22 @@ export function settleCustody(root: HTMLElement) {
   gsap.set(after, { autoAlpha: 1 })
 }
 
+/** Outline of the body front: square top on the seam, 14 radius at the bottom corners. */
+const BODY = `M${L} ${SEAM} H${R} V${BASE - 14} Q${R} ${BASE} ${R - 14} ${BASE} H${L + 14} Q${L} ${BASE} ${L} ${BASE - 14} Z`
+/** Stitching, inset 10 from the body edges with a concentric corner. */
+const BODY_STITCH = `M${L + 10} ${SEAM + 12} H${R - 10} V${BASE - 16} Q${R - 10} ${BASE - 10} ${R - 16} ${BASE - 10} H${L + 16} Q${L + 10} ${BASE - 10} ${L + 10} ${BASE - 16} Z`
+/** The lid's top face: the same width as the front, rounded at its far corners. */
+const LID_TOP = `M${L} ${LID} V${TOP + 10} Q${L} ${TOP} ${L + 10} ${TOP} H${R - 10} Q${R} ${TOP} ${R} ${TOP + 10} V${LID} Z`
+const LID_FRONT = `M${L} ${LID} H${R} V${SEAM} H${L} Z`
+/** Corner caps follow the body corner: outer radius 14, inner radius 8. */
+const capL = `M${L} ${BASE - 30} V${BASE - 14} Q${L} ${BASE} ${L + 14} ${BASE} H${L + 30} V${BASE - 6} H${L + 14} Q${L + 6} ${BASE - 6} ${L + 6} ${BASE - 14} V${BASE - 30} Z`
+const capR = `M${R} ${BASE - 30} V${BASE - 14} Q${R} ${BASE} ${R - 14} ${BASE} H${R - 30} V${BASE - 6} H${R - 14} Q${R - 6} ${BASE - 6} ${R - 6} ${BASE - 14} V${BASE - 30} Z`
+/** The inside of the lid, standing up from the hinge. Bottom edge tucks under the rim. */
+const LID_OPEN = `M${L} 252 V96 Q${L} 82 ${L + 14} 82 H${R - 14} Q${R} 82 ${R} 96 V252 Z`
+const LID_FELT = `M${L + 10} 252 V100 Q${L + 10} 92 ${L + 18} 92 H${R - 18} Q${R - 10} 92 ${R - 10} 100 V252 Z`
+const LINING = `M${L + 4} ${SEAM + 6} V${HINGE + 4} Q${L + 4} ${HINGE - 4} ${L + 12} ${HINGE - 4} H${R - 12} Q${R - 4} ${HINGE - 4} ${R - 4} ${HINGE + 4} V${SEAM + 6} Z`
+const EARTH = { cx: 320, cy: 350, r: 15 }
+
 export function Custody({ reduced }: { reduced: boolean }) {
   return (
     <figure className={`custody ${reduced ? 'is-still' : ''}`} aria-label="Your memory packed into a case you carry">
@@ -110,42 +170,63 @@ export function Custody({ reduced }: { reduced: boolean }) {
             <stop offset="0.7" stopColor="#eef4fc" />
             <stop offset="1" stopColor="#e2edf9" />
           </linearGradient>
-          <linearGradient id="cs-leather" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#c38c57" />
-            <stop offset="1" stopColor="#a56c3c" />
+          {/* Leather, lit from the top left: warm on top, deepening toward the lower edge. */}
+          <linearGradient id="cs-leather" x1="0" y1="0" x2="0.25" y2="1">
+            <stop offset="0" stopColor="#c99460" />
+            <stop offset="0.62" stopColor="#b47a46" />
+            <stop offset="1" stopColor="#9a6336" />
           </linearGradient>
-          <linearGradient id="cs-leather-lid" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#cf9a64" />
-            <stop offset="1" stopColor="#b98049" />
+          <linearGradient id="cs-leather-lid" x1="0" y1="0" x2="0.15" y2="1">
+            <stop offset="0" stopColor="#d4a16b" />
+            <stop offset="1" stopColor="#bf8650" />
           </linearGradient>
-          <linearGradient id="cs-leather-top" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#dcae7b" />
-            <stop offset="1" stopColor="#c89360" />
+          <linearGradient id="cs-leather-top" x1="0" y1="0" x2="0.3" y2="1">
+            <stop offset="0" stopColor="#dcb07e" />
+            <stop offset="1" stopColor="#d09d69" />
           </linearGradient>
-          <linearGradient id="cs-lining" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#5a3f2c" />
-            <stop offset="1" stopColor="#2c1e15" />
-          </linearGradient>
-          <linearGradient id="cs-felt" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#3b2a1e" />
-            <stop offset="1" stopColor="#523a29" />
-          </linearGradient>
-          <linearGradient id="cs-metal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#f3f1ec" />
-            <stop offset="0.5" stopColor="#c9c5bc" />
-            <stop offset="1" stopColor="#9d988e" />
+          <linearGradient id="cs-leather-open" x1="0" y1="0" x2="0.2" y2="1">
+            <stop offset="0" stopColor="#c48d59" />
+            <stop offset="1" stopColor="#a56d3d" />
           </linearGradient>
           <linearGradient id="cs-sheen" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#fff4e4" stopOpacity="0.16" />
-            <stop offset="0.38" stopColor="#fff4e4" stopOpacity="0" />
-            <stop offset="0.8" stopColor="#3a2008" stopOpacity="0" />
-            <stop offset="1" stopColor="#3a2008" stopOpacity="0.14" />
+            <stop offset="0" stopColor="#fff4e4" stopOpacity="0.14" />
+            <stop offset="0.4" stopColor="#fff4e4" stopOpacity="0" />
+            <stop offset="0.78" stopColor="#3a2008" stopOpacity="0" />
+            <stop offset="1" stopColor="#3a2008" stopOpacity="0.12" />
           </linearGradient>
-          <filter id="cs-blur" x="-20%" y="-200%" width="140%" height="500%">
-            <feGaussianBlur stdDeviation="7" />
+          <linearGradient id="cs-seam" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#3b1f0a" stopOpacity="0.32" />
+            <stop offset="1" stopColor="#3b1f0a" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="cs-lining" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#5b402d" />
+            <stop offset="1" stopColor="#2a1c13" />
+          </linearGradient>
+          <linearGradient id="cs-felt" x1="0" y1="0" x2="0.2" y2="1">
+            <stop offset="0" stopColor="#4a3424" />
+            <stop offset="1" stopColor="#36261a" />
+          </linearGradient>
+          <linearGradient id="cs-metal" x1="0" y1="0" x2="0.35" y2="1">
+            <stop offset="0" stopColor="#ecebe7" />
+            <stop offset="1" stopColor="#a7a39b" />
+          </linearGradient>
+          <linearGradient id="cs-handle" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#6e4626" />
+            <stop offset="1" stopColor="#4f3119" />
+          </linearGradient>
+          <radialGradient id="cs-glass" cx="0.32" cy="0.28" r="0.75">
+            <stop offset="0" stopColor="#ffffff" stopOpacity="0.32" />
+            <stop offset="0.55" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="1" stopColor="#000000" stopOpacity="0.28" />
+          </radialGradient>
+          <filter id="cs-blur-wide" x="-30%" y="-300%" width="160%" height="700%">
+            <feGaussianBlur stdDeviation="8" />
+          </filter>
+          <filter id="cs-blur-tight" x="-10%" y="-200%" width="120%" height="500%">
+            <feGaussianBlur stdDeviation="2.4" />
           </filter>
           <clipPath id="cs-earth-clip">
-            <circle cx="304" cy="350" r="6.5" />
+            <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r} />
           </clipPath>
           <g id="cs-cloud-shape">
             <circle cx="36" cy="54" r="22" />
@@ -165,19 +246,21 @@ export function Custody({ reduced }: { reduced: boolean }) {
           </g>
         </defs>
 
-        <ellipse className="cs-ground" cx="320" cy="412" rx="150" ry="9" fill="rgba(24, 26, 30, 0.28)" filter="url(#cs-blur)" />
+        {/* Contact shadow: a wide soft pool and a tight dark line under the feet. */}
+        <ellipse className="cs-ambient" cx="324" cy={FLOOR - 1} rx="176" ry="10" fill="rgba(28, 30, 36, 0.2)" filter="url(#cs-blur-wide)" />
+        <ellipse className="cs-contact" cx="322" cy={FLOOR} rx="148" ry="3.2" fill="rgba(22, 16, 10, 0.42)" filter="url(#cs-blur-tight)" />
 
         {/* Behind the clouds: the open lid and the inside of the case. */}
         <g className="cs-case">
           <g className="cs-lid-open" visibility={reduced ? 'hidden' : undefined}>
-            <rect x="196" y="110" width="248" height="150" rx="14" fill="url(#cs-leather)" />
-            <rect x="207" y="121" width="226" height="132" rx="8" fill="url(#cs-felt)" />
-            <rect x="220" y="190" width="200" height="56" rx="6" fill="#5b4231" />
-            <path d="M226 197 H414" stroke="rgba(255, 228, 196, 0.32)" strokeWidth="1.2" strokeDasharray="4 4" />
-            <rect x="196" y="110" width="248" height="5" rx="2.5" fill="rgba(255, 238, 214, 0.28)" />
+            <path d={LID_OPEN} fill="url(#cs-leather-open)" />
+            <path d={LID_FELT} fill="url(#cs-felt)" />
+            <path d={`M${L + 24} 186 H${R - 24} V244 H${L + 24} Z`} fill="#523a29" />
+            <path d={`M${L + 30} 194 H${R - 30}`} stroke="rgba(255, 228, 196, 0.26)" strokeWidth="1" strokeDasharray="4 4" />
+            <path d={`M${L + 14} 82.5 H${R - 14}`} stroke="rgba(255, 240, 220, 0.4)" strokeWidth="1" />
           </g>
-          <rect x="196" y="250" width="248" height="56" rx="9" fill="url(#cs-lining)" />
-          <path d="M206 258 H434" stroke="rgba(0, 0, 0, 0.3)" strokeWidth="5" strokeLinecap="round" />
+          <path d={LINING} fill="url(#cs-lining)" />
+          <path d={`M${L + 4} ${HINGE + 6} H${R - 4} V${HINGE + 14} H${L + 4} Z`} fill="rgba(0, 0, 0, 0.18)" />
         </g>
 
         {!reduced &&
@@ -189,47 +272,66 @@ export function Custody({ reduced }: { reduced: boolean }) {
             </g>
           ))}
 
-        {/* In front of the clouds: the body, its hardware and the closed lid. */}
+        {/* In front of the clouds: feet, body and its hardware. */}
         <g className="cs-case">
-          <path d="M190 300 H450 V388 Q450 404 434 404 H206 Q190 404 190 388 Z" fill="url(#cs-leather)" stroke="#8d5c31" strokeWidth="1.5" />
-          <path d="M190 300 H450 V388 Q450 404 434 404 H206 Q190 404 190 388 Z" fill="url(#cs-sheen)" />
-          <path d="M190 300 H450 V305 H190 Z" fill="rgba(255, 236, 208, 0.22)" />
-          <path d="M199 310 H441 V386 Q441 395 432 395 H208 Q199 395 199 386 Z" fill="none" stroke="rgba(255, 232, 200, 0.42)" strokeWidth="1.2" strokeDasharray="4 4" />
-          <path d="M190 372 V388 Q190 404 206 404 H222 V396 Q198 396 198 372 Z" fill="#7d4f2a" />
-          <path d="M450 372 V388 Q450 404 434 404 H418 V396 Q442 396 442 372 Z" fill="#7d4f2a" />
-          <rect x="212" y="402" width="20" height="6" rx="3" fill="#3a2516" />
-          <rect x="408" y="402" width="20" height="6" rx="3" fill="#3a2516" />
-          <g className="cs-tag">
-            <rect x="290" y="338" width="62" height="24" rx="5" fill="#2a2b2e" />
-            <rect x="290.5" y="338.5" width="61" height="23" rx="4.5" fill="none" stroke="rgba(255, 255, 255, 0.12)" />
-            <image href="/media/product/earth-mark.png" x="297.5" y="343.5" width="13" height="13" clipPath="url(#cs-earth-clip)" />
-            <text x="316" y="354.5" className="cs-tag-text">
-              MISSION
-            </text>
+          <rect x={L + 26} y={BASE - 6} width="24" height={FLOOR - BASE + 6} rx="3.5" fill="#3d2717" />
+          <rect x={R - 50} y={BASE - 6} width="24" height={FLOOR - BASE + 6} rx="3.5" fill="#3d2717" />
+          <path d={BODY} fill="url(#cs-leather)" />
+          <path d={BODY} fill="url(#cs-sheen)" />
+          <path d={`M${L} ${SEAM} H${R} V${SEAM + 9} H${L} Z`} fill="url(#cs-seam)" />
+          <path d={BODY_STITCH} fill="none" stroke="rgba(255, 232, 200, 0.36)" strokeWidth="1" strokeDasharray="4 3.5" />
+          <path d={capL} fill="#87552d" />
+          <path d={capR} fill="#7b4c27" />
+          {CLASPS.map((x) => (
+            <g key={x}>
+              <rect x={x - 15} y={SEAM + 2} width="30" height="20" rx="4" fill="url(#cs-metal)" />
+              <path d={`M${x - 11} ${SEAM + 2.5} H${x + 11}`} stroke="rgba(255, 255, 255, 0.75)" strokeWidth="1" />
+              <rect x={x - 2.5} y={SEAM + 12} width="5" height="5" rx="1.2" fill="#5d5952" />
+            </g>
+          ))}
+          <g className="cs-badge">
+            <circle cx={EARTH.cx} cy={EARTH.cy + 0.8} r={EARTH.r + 2.6} fill="rgba(40, 20, 6, 0.3)" />
+            <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r + 2.2} fill="#26272a" />
+            <image
+              href="/assets/nasa/earth-240.webp"
+              x={EARTH.cx - EARTH.r}
+              y={EARTH.cy - EARTH.r}
+              width={EARTH.r * 2}
+              height={EARTH.r * 2}
+              clipPath="url(#cs-earth-clip)"
+              preserveAspectRatio="xMidYMid slice"
+            />
+            <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r} fill="url(#cs-glass)" />
+            <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r + 1.1} fill="none" stroke="rgba(255, 255, 255, 0.22)" strokeWidth="0.8" />
+            <ellipse cx={EARTH.cx - 5.5} cy={EARTH.cy - 7.5} rx="4.2" ry="1.8" transform={`rotate(-32 ${EARTH.cx - 5.5} ${EARTH.cy - 7.5})`} fill="rgba(255, 255, 255, 0.6)" />
           </g>
-          <rect x="226" y="298" width="28" height="20" rx="4" fill="url(#cs-metal)" />
-          <circle cx="240" cy="310" r="2.2" fill="#55524c" />
-          <rect x="386" y="298" width="28" height="20" rx="4" fill="url(#cs-metal)" />
-          <circle cx="400" cy="310" r="2.2" fill="#55524c" />
         </g>
 
+        {/* The closed lid: top face, front band and handle. */}
         <g className="cs-case">
           <g className="cs-lid-closed">
-            <path d="M200 262 Q200 248 214 248 H426 Q440 248 440 262 Z" fill="url(#cs-leather-top)" />
-            <path d="M190 262 H450 V300 H190 Z" fill="url(#cs-leather-lid)" stroke="#8d5c31" strokeWidth="1.5" />
-            <path d="M190 262 H450 V300 H190 Z" fill="url(#cs-sheen)" />
-            <path d="M190 296 H450 V300 H190 Z" fill="rgba(60, 34, 14, 0.35)" />
-            <path d="M199 270 H441 M199 291 H441" stroke="rgba(255, 232, 200, 0.42)" strokeWidth="1.2" strokeDasharray="4 4" />
-            <rect x="282" y="242" width="14" height="10" rx="3" fill="url(#cs-metal)" />
-            <rect x="344" y="242" width="14" height="10" rx="3" fill="url(#cs-metal)" />
-            <path d="M289 246 V232 Q289 216 305 216 H335 Q351 216 351 232 V246" fill="none" stroke="#5e3b1f" strokeWidth="10" strokeLinecap="round" />
-            <path d="M296 226 Q299 221 306 221 H334" fill="none" stroke="rgba(255, 226, 190, 0.35)" strokeWidth="2.5" strokeLinecap="round" />
+            <path d={LID_TOP} fill="url(#cs-leather-top)" />
+            <path d={LID_FRONT} fill="url(#cs-leather-lid)" />
+            <path d={LID_FRONT} fill="url(#cs-sheen)" />
+            <path d={`M${L} ${LID} H${R}`} stroke="rgba(255, 240, 220, 0.45)" strokeWidth="1" />
+            <path d={`M${L} ${SEAM - 4} H${R} V${SEAM} H${L} Z`} fill="rgba(60, 32, 12, 0.22)" />
+            <path d={`M${L + 10} ${LID + 8} H${R - 10} M${L + 10} ${SEAM - 10} H${R - 10}`} stroke="rgba(255, 232, 200, 0.36)" strokeWidth="1" strokeDasharray="4 3.5" />
+            <rect x="271" y={TOP - 6} width="18" height="10" rx="3" fill="url(#cs-metal)" />
+            <rect x="351" y={TOP - 6} width="18" height="10" rx="3" fill="url(#cs-metal)" />
+            <path d={`M280 ${TOP - 2} V222 Q280 204 298 204 H342 Q360 204 360 222 V${TOP - 2}`} fill="none" stroke="url(#cs-handle)" strokeWidth="11" strokeLinecap="round" />
+            <path d="M287 216 Q291 210 299 210 H340" fill="none" stroke="rgba(255, 226, 190, 0.3)" strokeWidth="2" strokeLinecap="round" />
           </g>
         </g>
 
+        {/* Clasp latches hook from the body plates up onto the lid. */}
         <g className="cs-case">
-          <rect className="cs-latch" x="229" y="280" width="22" height="24" rx="4" fill="url(#cs-metal)" />
-          <rect className="cs-latch" x="389" y="280" width="22" height="24" rx="4" fill="url(#cs-metal)" />
+          {CLASPS.map((x) => (
+            <g key={x} className="cs-latch">
+              <rect x={x - 12} y={SEAM - 20} width="24" height={LATCH_PIVOT - SEAM + 20} rx="4" fill="url(#cs-metal)" />
+              <path d={`M${x - 8} ${SEAM - 19.5} H${x + 8}`} stroke="rgba(255, 255, 255, 0.8)" strokeWidth="1" />
+              <path d={`M${x - 7} ${SEAM - 3} H${x + 7}`} stroke="rgba(70, 66, 60, 0.35)" strokeWidth="1" />
+            </g>
+          ))}
         </g>
       </svg>
       <figcaption className="custody-notes">
