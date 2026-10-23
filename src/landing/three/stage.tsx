@@ -144,6 +144,14 @@ export function registerView(id: string, track: HTMLElement, node: ReactNode) {
   }
 }
 
+/**
+ * Every registered scene's useFrame runs whenever any view is active, because they share
+ * one canvas. Heavy scenes check this to skip their work while they are off screen.
+ */
+export function isViewActive(id: string) {
+  return active.has(id)
+}
+
 export function setViewActive(id: string, on: boolean) {
   if (on) active.add(id)
   else active.delete(id)

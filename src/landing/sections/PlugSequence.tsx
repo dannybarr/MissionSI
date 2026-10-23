@@ -34,10 +34,10 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
         scrollTrigger: {
           trigger: el,
           start: 'top top',
-          end: '+=280%',
+          end: '+=220%',
           pin: true,
-          scrub: 0.8,
-          anticipatePin: 1,
+          // Lenis already smooths the scroll; matching every pin to scrub: true keeps one feel.
+          scrub: true,
           onUpdate: (self) => {
             const p = self.progress
             const ph = p < 0.18 ? 0 : p < 0.32 ? 1 : p < 0.55 ? 2 : p < 0.78 ? 3 : 4
@@ -47,11 +47,12 @@ export function PlugSequence({ reduced }: { reduced: boolean }) {
           },
         },
       })
-      tl.to(scene, { '--cable': 1, duration: 0.22, ease: 'power2.inOut' }, 0.08)
-        .to(scene, { '--status': 1, duration: 0.08, ease: 'power1.inOut' }, 0.26)
-        .to(scene, { '--on': 1, duration: 0.16, ease: 'power1.inOut' }, 0.34)
-        .to(scene, { '--phone': 1, duration: 0.16, ease: 'power1.inOut' }, 0.56)
-        .to(scene, { '--status': 0.35, '--on': 0, '--cable': 0, '--off': 1, duration: 0.14 }, 0.82)
+      // Steps overlap and fill the whole pin, so every stretch of scroll moves the scene.
+      tl.to(scene, { '--cable': 1, duration: 0.28, ease: 'power2.inOut' }, 0)
+        .to(scene, { '--status': 1, duration: 0.12, ease: 'power1.inOut' }, 0.22)
+        .to(scene, { '--on': 1, duration: 0.22, ease: 'power1.inOut' }, 0.3)
+        .to(scene, { '--phone': 1, duration: 0.26, ease: 'power1.inOut' }, 0.48)
+        .to(scene, { '--status': 0.35, '--on': 0, '--cable': 0, '--off': 1, duration: 0.28, ease: 'power1.inOut' }, 0.72)
     }, el)
     return () => ctx.revert()
   }, [reduced])

@@ -59,7 +59,6 @@ export function HowItWorks({ reduced }: { reduced: boolean }) {
         start: 'top top',
         end: '+=180%',
         pin: true,
-        anticipatePin: 1,
         onUpdate: (self) => {
           gsap.set('.how-rail i', { scaleY: self.progress })
           setStep(Math.min(3, Math.floor(self.progress * 4)))

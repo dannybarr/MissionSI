@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CardFace } from "@/landing/components/CardFace";
 import { gsap, prefersStatic, ScrollTrigger } from "@/landing/lib/motion";
+import { scrollToY } from "@/landing/lib/smooth";
 import { explodePose, explodeSignals } from "@/landing/three/explodePose";
 import { CONCEPT_LINE, OPEN_PARTS, partIndex, type PartId } from "./open-parts";
 import { ExplodedStill } from "./ExplodedStill";
@@ -94,7 +95,7 @@ export function OpenCard({ reduced }: { reduced: boolean }) {
     const span = st.end - st.start;
     const progress = 0.4 + ((idx + 0.5) / OPEN_PARTS.length) * 0.55;
     const y = st.start + span * progress;
-    window.scrollTo({ top: y, behavior: "smooth" });
+    scrollToY(y);
   };
 
   const left = OPEN_PARTS.filter((p) => p.column === "left");

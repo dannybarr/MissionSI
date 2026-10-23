@@ -5,6 +5,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import * as THREE from 'three'
 import { AGENT_MARKS, type AgentMark } from '@/landing/sections/marks'
 import { flagPose, flagSignals } from './flagPose'
+import { isViewActive } from './stage'
 
 /**
  * Agent ribbons: woven lanyard strips bunched off the top-right corner, streaming
@@ -310,6 +311,8 @@ export function FlagsScene() {
   useFrame((state, dt) => {
     const camera = cam.current
     if (!camera || size.width < 2) return
+    // Off screen: skip the per-frame rebuild of every ribbon (the shared canvas keeps ticking for other views).
+    if (ready.current && !isViewActive('flags')) return
     const step = Math.min(dt, 0.05)
     flagPose.wind = Math.max(0, flagPose.wind - step * 0.55)
     clock.current += step * (1 + flagPose.wind * 1.6)

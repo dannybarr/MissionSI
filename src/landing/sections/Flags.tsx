@@ -90,7 +90,7 @@ export function Flags({ reduced }: { reduced: boolean }) {
       gsap.to(flagPose, {
         unfurl: 1,
         ease: 'none',
-        scrollTrigger: { trigger: el, start: 'top 80%', end: 'top 5%', scrub: 1.1 },
+        scrollTrigger: { trigger: el, start: 'top 80%', end: 'top 5%', scrub: true },
       })
       gsap.to(flagPose, {
         drift: 1,

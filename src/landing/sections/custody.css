@@ -17,3 +17,33 @@
   .custody-note { font-size: 11.5px; }
   .statement .h-scroll { margin-top: 5vh; }
 }
+
+/* ---------- cloud icons: one part of a life per cloud ---------- */
+.cs-icon { fill: none; stroke: #6f97cc; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.cs-icon * { vector-effect: non-scaling-stroke; }
+.cs-icon .cs-icon-soft { fill: rgba(111, 151, 204, 0.1); }
+.cs-icon .cs-icon-faint { stroke-opacity: 0.45; }
+.cs-icon .cs-glow { stroke: none; fill: #fff3c4; opacity: 0; }
+.cs-icon .cs-pin-shadow { stroke: none; fill: rgba(111, 151, 204, 0.28); }
+.cs-icon g, .cs-icon .cs-pin-shadow { transform-box: fill-box; }
+.cs-pulse { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+
+.custody.is-live .cs-pulse { animation: cs-pulse 2.4s cubic-bezier(0.45, 0, 0.3, 1) infinite; }
+.custody.is-live .cs-glow { animation: cs-glow 2.8s ease-in-out 0.4s infinite; }
+.custody.is-live .cs-coin { transform-origin: 50% 50%; animation: cs-coin 2.6s ease-in-out 0.9s infinite; }
+.custody.is-live .cs-lean-l { transform-origin: 50% 100%; animation: cs-lean-l 3s ease-in-out 0.2s infinite; }
+.custody.is-live .cs-lean-r { transform-origin: 50% 100%; animation: cs-lean-r 3s ease-in-out 0.2s infinite; }
+.custody.is-live .cs-pin { transform-origin: 50% 100%; animation: cs-bob 2.2s ease-in-out 1.3s infinite; }
+.custody.is-live .cs-pin-shadow { transform-origin: 50% 50%; animation: cs-bob-shadow 2.2s ease-in-out 1.3s infinite; }
+
+@keyframes cs-pulse { 0% { stroke-dashoffset: 1; } 45%, 62% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+@keyframes cs-glow { 0%, 100% { opacity: 0; } 50% { opacity: 0.85; } }
+@keyframes cs-coin { 0%, 30% { transform: scaleX(1); } 50% { transform: scaleX(0.16); } 70%, 100% { transform: scaleX(1); } }
+@keyframes cs-lean-l { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(7deg); } }
+@keyframes cs-lean-r { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-7deg); } }
+@keyframes cs-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.4px); } }
+@keyframes cs-bob-shadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(0.7); opacity: 0.6; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .custody .cs-icon * { animation: none !important; }
+}

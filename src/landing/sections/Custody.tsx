@@ -1,13 +1,15 @@
-import { EASE, gsap } from '@/landing/lib/motion'
+import { EASE, gsap, ScrollTrigger } from '@/landing/lib/motion'
 import './custody.css'
 
-/** Where each cloud floats before it is packed: top-left of its 160 x 84 box, plus scale. */
-const CLOUDS = [
-  { x: 30, y: 30, s: 1.06, from: -1 },
-  { x: 444, y: 10, s: 1.14, from: 1 },
-  { x: 240, y: 70, s: 0.84, from: -1 },
-  { x: 480, y: 152, s: 0.78, from: 1 },
-  { x: 6, y: 172, s: 0.72, from: -1 },
+type Kind = 'health' | 'ideas' | 'money' | 'people' | 'places'
+
+/** Where each cloud floats before it is packed: top-left of its 160 x 84 box, plus scale. Each holds one part of a life. */
+const CLOUDS: { x: number; y: number; s: number; from: number; kind: Kind; label: string }[] = [
+  { x: 30, y: 30, s: 1.06, from: -1, kind: 'health', label: 'Health' },
+  { x: 444, y: 10, s: 1.14, from: 1, kind: 'ideas', label: 'Ideas' },
+  { x: 240, y: 70, s: 0.84, from: -1, kind: 'money', label: 'Money' },
+  { x: 492, y: 136, s: 0.78, from: 1, kind: 'people', label: 'Relationships' },
+  { x: -6, y: 150, s: 0.72, from: -1, kind: 'places', label: 'Places' },
 ]
 
 /**
@@ -25,9 +27,17 @@ const HINGE = 246 // the lid's back hinge, as seen from the front
 const CLASPS = [222, 418]
 const LATCH_PIVOT = 298
 
+/**
+ * The case is drawn at its original size and scaled up as a whole about the middle of its feet,
+ * so every edge keeps lining up. Clouds live outside that scale, so their targets are converted.
+ */
+const GROW = 1.2
+const SIZE = `matrix(${GROW} 0 0 ${GROW} ${320 * (1 - GROW)} ${FLOOR * (1 - GROW)})`
+const onCase = (y: number) => FLOOR + GROW * (y - FLOOR)
+
 /** Centre of the case opening. A cloud box is 160 x 84, scaled about its centre. */
-const MOUTH = { x: 320 - 80, y: 268 - 46 }
-const SINK = 340 - 46
+const MOUTH = { x: 320 - 80, y: onCase(268) - 46 }
+const SINK = onCase(340) - 46
 
 /** A vertical squash about a horizontal line at y, as a plain SVG matrix so it scrubs cleanly to near zero. */
 const hinge = (s: number, y: number) => `matrix(1 0 0 ${s} 0 ${(y * (1 - s)).toFixed(3)})`
@@ -52,9 +62,21 @@ export function addCustody(tl: gsap.core.Timeline, root: HTMLElement, at = 0) {
   const [before, after] = q('.custody-note')
 
   // Independent idle drift, on an inner group so the scrubbed timeline owns the outer transform.
-  floats.forEach((el, i) => {
-    gsap.to(el, { y: i % 2 ? 7 : -7, x: i % 2 ? -4 : 5, duration: 2.6 + i * 0.45, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: i * 0.3 })
+  const drift = floats.map((el, i) =>
+    gsap.to(el, { y: i % 2 ? 7 : -7, x: i % 2 ? -4 : 5, duration: 2.6 + i * 0.45, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: i * 0.3 }),
+  )
+  // Drift and the icon loops only run while the section is on screen.
+  const figure = root.querySelector('.custody')
+  ScrollTrigger.create({
+    trigger: root,
+    start: 'top bottom',
+    end: 'bottom top',
+    onToggle: ({ isActive }) => {
+      figure?.classList.toggle('is-live', isActive)
+      drift.forEach((t) => (isActive ? t.resume() : t.pause()))
+    },
   })
+  drift.forEach((t) => t.pause())
 
   // The case is four layers (clouds pass between them), so one pose drives all four as a single matrix,
   // pivoting on the middle of its feet. Tilt is in degrees.
@@ -160,10 +182,62 @@ const LID_FELT = `M${L + 10} 252 V100 Q${L + 10} 92 ${L + 18} 92 H${R - 18} Q${R
 const LINING = `M${L + 4} ${SEAM + 6} V${HINGE + 4} Q${L + 4} ${HINGE - 4} ${L + 12} ${HINGE - 4} H${R - 12} Q${R - 4} ${HINGE - 4} ${R - 4} ${HINGE + 4} V${SEAM + 6} Z`
 const EARTH = { cx: 320, cy: 350, r: 15 }
 
+/**
+ * One small drawing per cloud, centred on the cloud's body and about 30% of its height.
+ * Drawn in a 26-unit box around the origin, in the cloud's own deeper underside blue.
+ */
+function CloudIcon({ kind }: { kind: Kind }) {
+  return (
+    <g className={`cs-icon cs-icon-${kind}`} transform="translate(82 50)" aria-hidden="true">
+      {kind === 'health' && (
+        <>
+          <path d="M0 10 C-12 3 -13 -6 -6.5 -9.5 C-3.4 -11 -1 -9.6 0 -7 C1 -9.6 3.4 -11 6.5 -9.5 C13 -6 12 3 0 10 Z" className="cs-icon-soft" />
+          <path d="M-8 -0.5 H-4.2 L-2.2 -4.6 L0.8 3.6 L2.8 -0.5 H8" className="cs-pulse" pathLength={1} />
+        </>
+      )}
+      {kind === 'ideas' && (
+        <>
+          <circle r="11" cy="-4" className="cs-glow" />
+          <path d="M-3.6 5 C-3.6 2 -8 0 -8 -5 A8 8 0 1 1 8 -5 C8 0 3.6 2 3.6 5 Z" className="cs-icon-soft" />
+          <path d="M-3.4 8.4 H3.4 M-2 11.4 H2 M-1.6 -1 L0 -4 L1.6 -1" />
+        </>
+      )}
+      {kind === 'money' && (
+        <g className="cs-coin">
+          <circle r="10.5" className="cs-icon-soft" />
+          <circle r="7.6" className="cs-icon-faint" />
+          <path d="M2.8 -3.6 C2.3 -5.6 -2.4 -5.8 -2.4 -2 V4.2 M-4.4 0.2 H1.2 M-4.4 4.2 H3.8" />
+        </g>
+      )}
+      {kind === 'people' && (
+        <>
+          <g className="cs-lean-l">
+            <circle cx="-5.5" cy="-5" r="3.4" />
+            <path d="M-11 9.5 C-11 3 -9 0.5 -5.5 0.5 C-2 0.5 0 3 0 9.5" />
+          </g>
+          <g className="cs-lean-r">
+            <circle cx="5.5" cy="-5" r="3.4" />
+            <path d="M0 9.5 C0 3 2 0.5 5.5 0.5 C9 0.5 11 3 11 9.5" />
+          </g>
+        </>
+      )}
+      {kind === 'places' && (
+        <>
+          <ellipse cy="11" rx="5" ry="1.2" className="cs-icon-faint cs-pin-shadow" />
+          <g className="cs-pin">
+            <path d="M0 9.5 C-1.5 7.6 -8 1.6 -8 -3.5 A8 8 0 1 1 8 -3.5 C8 1.6 1.5 7.6 0 9.5 Z" className="cs-icon-soft" />
+            <circle cy="-3.6" r="2.8" />
+          </g>
+        </>
+      )}
+    </g>
+  )
+}
+
 export function Custody({ reduced }: { reduced: boolean }) {
   return (
     <figure className={`custody ${reduced ? 'is-still' : ''}`} aria-label="Your memory packed into a case you carry">
-      <svg className="custody-art" viewBox="0 0 640 440" aria-hidden="true">
+      <svg className="custody-art" viewBox="0 0 640 440" role="group" aria-label="Memories in other people's clouds, packed into a case you carry">
         <defs>
           <linearGradient id="cs-cloud-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#ffffff" />
@@ -247,91 +321,103 @@ export function Custody({ reduced }: { reduced: boolean }) {
         </defs>
 
         {/* Contact shadow: a wide soft pool and a tight dark line under the feet. */}
-        <ellipse className="cs-ambient" cx="324" cy={FLOOR - 1} rx="176" ry="10" fill="rgba(28, 30, 36, 0.2)" filter="url(#cs-blur-wide)" />
-        <ellipse className="cs-contact" cx="322" cy={FLOOR} rx="148" ry="3.2" fill="rgba(22, 16, 10, 0.42)" filter="url(#cs-blur-tight)" />
+        <g transform={SIZE} aria-hidden="true">
+          <ellipse className="cs-ambient" cx="324" cy={FLOOR - 1} rx="176" ry="10" fill="rgba(28, 30, 36, 0.2)" filter="url(#cs-blur-wide)" />
+          <ellipse className="cs-contact" cx="322" cy={FLOOR} rx="148" ry="3.2" fill="rgba(22, 16, 10, 0.42)" filter="url(#cs-blur-tight)" />
+        </g>
 
         {/* Behind the clouds: the open lid and the inside of the case. */}
-        <g className="cs-case">
-          <g className="cs-lid-open" visibility={reduced ? 'hidden' : undefined}>
-            <path d={LID_OPEN} fill="url(#cs-leather-open)" />
-            <path d={LID_FELT} fill="url(#cs-felt)" />
-            <path d={`M${L + 24} 186 H${R - 24} V244 H${L + 24} Z`} fill="#523a29" />
-            <path d={`M${L + 30} 194 H${R - 30}`} stroke="rgba(255, 228, 196, 0.26)" strokeWidth="1" strokeDasharray="4 4" />
-            <path d={`M${L + 14} 82.5 H${R - 14}`} stroke="rgba(255, 240, 220, 0.4)" strokeWidth="1" />
+        <g transform={SIZE} aria-hidden="true">
+          <g className="cs-case">
+            <g className="cs-lid-open" visibility={reduced ? 'hidden' : undefined}>
+              <path d={LID_OPEN} fill="url(#cs-leather-open)" />
+              <path d={LID_FELT} fill="url(#cs-felt)" />
+              <path d={`M${L + 24} 186 H${R - 24} V244 H${L + 24} Z`} fill="#523a29" />
+              <path d={`M${L + 30} 194 H${R - 30}`} stroke="rgba(255, 228, 196, 0.26)" strokeWidth="1" strokeDasharray="4 4" />
+              <path d={`M${L + 14} 82.5 H${R - 14}`} stroke="rgba(255, 240, 220, 0.4)" strokeWidth="1" />
+            </g>
+            <path d={LINING} fill="url(#cs-lining)" />
+            <path d={`M${L + 4} ${HINGE + 6} H${R - 4} V${HINGE + 14} H${L + 4} Z`} fill="rgba(0, 0, 0, 0.18)" />
           </g>
-          <path d={LINING} fill="url(#cs-lining)" />
-          <path d={`M${L + 4} ${HINGE + 6} H${R - 4} V${HINGE + 14} H${L + 4} Z`} fill="rgba(0, 0, 0, 0.18)" />
         </g>
 
         {!reduced &&
           CLOUDS.map((c, i) => (
-            <g key={i} className="cs-cloud" style={{ visibility: 'hidden' }}>
+            <g key={i} className="cs-cloud" style={{ visibility: 'hidden' }} role="img" aria-label={c.label}>
+              <title>{c.label}</title>
               <g className="cs-float">
                 <use href="#cs-cloud" />
+                <CloudIcon kind={c.kind} />
               </g>
             </g>
           ))}
 
         {/* In front of the clouds: feet, body and its hardware. */}
-        <g className="cs-case">
-          <rect x={L + 26} y={BASE - 6} width="24" height={FLOOR - BASE + 6} rx="3.5" fill="#3d2717" />
-          <rect x={R - 50} y={BASE - 6} width="24" height={FLOOR - BASE + 6} rx="3.5" fill="#3d2717" />
-          <path d={BODY} fill="url(#cs-leather)" />
-          <path d={BODY} fill="url(#cs-sheen)" />
-          <path d={`M${L} ${SEAM} H${R} V${SEAM + 9} H${L} Z`} fill="url(#cs-seam)" />
-          <path d={BODY_STITCH} fill="none" stroke="rgba(255, 232, 200, 0.36)" strokeWidth="1" strokeDasharray="4 3.5" />
-          <path d={capL} fill="#87552d" />
-          <path d={capR} fill="#7b4c27" />
-          {CLASPS.map((x) => (
-            <g key={x}>
-              <rect x={x - 15} y={SEAM + 2} width="30" height="20" rx="4" fill="url(#cs-metal)" />
-              <path d={`M${x - 11} ${SEAM + 2.5} H${x + 11}`} stroke="rgba(255, 255, 255, 0.75)" strokeWidth="1" />
-              <rect x={x - 2.5} y={SEAM + 12} width="5" height="5" rx="1.2" fill="#5d5952" />
+        <g transform={SIZE} aria-hidden="true">
+          <g className="cs-case">
+            <rect x={L + 26} y={BASE - 6} width="24" height={FLOOR - BASE + 6} rx="3.5" fill="#3d2717" />
+            <rect x={R - 50} y={BASE - 6} width="24" height={FLOOR - BASE + 6} rx="3.5" fill="#3d2717" />
+            <path d={BODY} fill="url(#cs-leather)" />
+            <path d={BODY} fill="url(#cs-sheen)" />
+            <path d={`M${L} ${SEAM} H${R} V${SEAM + 9} H${L} Z`} fill="url(#cs-seam)" />
+            <path d={BODY_STITCH} fill="none" stroke="rgba(255, 232, 200, 0.36)" strokeWidth="1" strokeDasharray="4 3.5" />
+            <path d={capL} fill="#87552d" />
+            <path d={capR} fill="#7b4c27" />
+            {CLASPS.map((x) => (
+              <g key={x}>
+                <rect x={x - 15} y={SEAM + 2} width="30" height="20" rx="4" fill="url(#cs-metal)" />
+                <path d={`M${x - 11} ${SEAM + 2.5} H${x + 11}`} stroke="rgba(255, 255, 255, 0.75)" strokeWidth="1" />
+                <rect x={x - 2.5} y={SEAM + 12} width="5" height="5" rx="1.2" fill="#5d5952" />
+              </g>
+            ))}
+            <g className="cs-badge">
+              <circle cx={EARTH.cx} cy={EARTH.cy + 0.8} r={EARTH.r + 2.6} fill="rgba(40, 20, 6, 0.3)" />
+              <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r + 2.2} fill="#26272a" />
+              <image
+                href="/assets/nasa/earth-240.webp"
+                x={EARTH.cx - EARTH.r}
+                y={EARTH.cy - EARTH.r}
+                width={EARTH.r * 2}
+                height={EARTH.r * 2}
+                clipPath="url(#cs-earth-clip)"
+                preserveAspectRatio="xMidYMid slice"
+              />
+              <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r} fill="url(#cs-glass)" />
+              <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r + 1.1} fill="none" stroke="rgba(255, 255, 255, 0.22)" strokeWidth="0.8" />
+              <ellipse cx={EARTH.cx - 5.5} cy={EARTH.cy - 7.5} rx="4.2" ry="1.8" transform={`rotate(-32 ${EARTH.cx - 5.5} ${EARTH.cy - 7.5})`} fill="rgba(255, 255, 255, 0.6)" />
             </g>
-          ))}
-          <g className="cs-badge">
-            <circle cx={EARTH.cx} cy={EARTH.cy + 0.8} r={EARTH.r + 2.6} fill="rgba(40, 20, 6, 0.3)" />
-            <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r + 2.2} fill="#26272a" />
-            <image
-              href="/assets/nasa/earth-240.webp"
-              x={EARTH.cx - EARTH.r}
-              y={EARTH.cy - EARTH.r}
-              width={EARTH.r * 2}
-              height={EARTH.r * 2}
-              clipPath="url(#cs-earth-clip)"
-              preserveAspectRatio="xMidYMid slice"
-            />
-            <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r} fill="url(#cs-glass)" />
-            <circle cx={EARTH.cx} cy={EARTH.cy} r={EARTH.r + 1.1} fill="none" stroke="rgba(255, 255, 255, 0.22)" strokeWidth="0.8" />
-            <ellipse cx={EARTH.cx - 5.5} cy={EARTH.cy - 7.5} rx="4.2" ry="1.8" transform={`rotate(-32 ${EARTH.cx - 5.5} ${EARTH.cy - 7.5})`} fill="rgba(255, 255, 255, 0.6)" />
           </g>
         </g>
 
         {/* The closed lid: top face, front band and handle. */}
-        <g className="cs-case">
-          <g className="cs-lid-closed">
-            <path d={LID_TOP} fill="url(#cs-leather-top)" />
-            <path d={LID_FRONT} fill="url(#cs-leather-lid)" />
-            <path d={LID_FRONT} fill="url(#cs-sheen)" />
-            <path d={`M${L} ${LID} H${R}`} stroke="rgba(255, 240, 220, 0.45)" strokeWidth="1" />
-            <path d={`M${L} ${SEAM - 4} H${R} V${SEAM} H${L} Z`} fill="rgba(60, 32, 12, 0.22)" />
-            <path d={`M${L + 10} ${LID + 8} H${R - 10} M${L + 10} ${SEAM - 10} H${R - 10}`} stroke="rgba(255, 232, 200, 0.36)" strokeWidth="1" strokeDasharray="4 3.5" />
-            <rect x="271" y={TOP - 6} width="18" height="10" rx="3" fill="url(#cs-metal)" />
-            <rect x="351" y={TOP - 6} width="18" height="10" rx="3" fill="url(#cs-metal)" />
-            <path d={`M280 ${TOP - 2} V222 Q280 204 298 204 H342 Q360 204 360 222 V${TOP - 2}`} fill="none" stroke="url(#cs-handle)" strokeWidth="11" strokeLinecap="round" />
-            <path d="M287 216 Q291 210 299 210 H340" fill="none" stroke="rgba(255, 226, 190, 0.3)" strokeWidth="2" strokeLinecap="round" />
+        <g transform={SIZE} aria-hidden="true">
+          <g className="cs-case">
+            <g className="cs-lid-closed">
+              <path d={LID_TOP} fill="url(#cs-leather-top)" />
+              <path d={LID_FRONT} fill="url(#cs-leather-lid)" />
+              <path d={LID_FRONT} fill="url(#cs-sheen)" />
+              <path d={`M${L} ${LID} H${R}`} stroke="rgba(255, 240, 220, 0.45)" strokeWidth="1" />
+              <path d={`M${L} ${SEAM - 4} H${R} V${SEAM} H${L} Z`} fill="rgba(60, 32, 12, 0.22)" />
+              <path d={`M${L + 10} ${LID + 8} H${R - 10} M${L + 10} ${SEAM - 10} H${R - 10}`} stroke="rgba(255, 232, 200, 0.36)" strokeWidth="1" strokeDasharray="4 3.5" />
+              <rect x="271" y={TOP - 6} width="18" height="10" rx="3" fill="url(#cs-metal)" />
+              <rect x="351" y={TOP - 6} width="18" height="10" rx="3" fill="url(#cs-metal)" />
+              <path d={`M280 ${TOP - 2} V222 Q280 204 298 204 H342 Q360 204 360 222 V${TOP - 2}`} fill="none" stroke="url(#cs-handle)" strokeWidth="11" strokeLinecap="round" />
+              <path d="M287 216 Q291 210 299 210 H340" fill="none" stroke="rgba(255, 226, 190, 0.3)" strokeWidth="2" strokeLinecap="round" />
+            </g>
           </g>
         </g>
 
         {/* Clasp latches hook from the body plates up onto the lid. */}
-        <g className="cs-case">
-          {CLASPS.map((x) => (
-            <g key={x} className="cs-latch">
-              <rect x={x - 12} y={SEAM - 20} width="24" height={LATCH_PIVOT - SEAM + 20} rx="4" fill="url(#cs-metal)" />
-              <path d={`M${x - 8} ${SEAM - 19.5} H${x + 8}`} stroke="rgba(255, 255, 255, 0.8)" strokeWidth="1" />
-              <path d={`M${x - 7} ${SEAM - 3} H${x + 7}`} stroke="rgba(70, 66, 60, 0.35)" strokeWidth="1" />
-            </g>
-          ))}
+        <g transform={SIZE} aria-hidden="true">
+          <g className="cs-case">
+            {CLASPS.map((x) => (
+              <g key={x} className="cs-latch">
+                <rect x={x - 12} y={SEAM - 20} width="24" height={LATCH_PIVOT - SEAM + 20} rx="4" fill="url(#cs-metal)" />
+                <path d={`M${x - 8} ${SEAM - 19.5} H${x + 8}`} stroke="rgba(255, 255, 255, 0.8)" strokeWidth="1" />
+                <path d={`M${x - 7} ${SEAM - 3} H${x + 7}`} stroke="rgba(70, 66, 60, 0.35)" strokeWidth="1" />
+              </g>
+            ))}
+          </g>
         </g>
       </svg>
       <figcaption className="custody-notes">

@@ -35,8 +35,7 @@ export function Statement({ reduced }: { reduced: boolean }) {
           start: 'top top',
           end: '+=300%',
           pin: true,
-          scrub: 0.8,
-          anticipatePin: 1,
+          scrub: true,
           invalidateOnRefresh: true,
         },
       })
